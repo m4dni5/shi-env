@@ -1,0 +1,137 @@
+# i3 config — Vestige desktop
+set $mod Mod4
+font pango:monospace 10
+
+# Floating — $mod + left-click drag to move, $mod + right-click drag to resize
+floating_modifier $mod
+
+# Colors — dark mountain twilight
+set $bg       #1a1a2e
+set $fg       #c8c8d4
+set $accent   #c9a227
+set $urgent   #c94427
+set $dim      #4a4a5e
+
+# Terminal
+bindsym $mod+Return exec kitty
+bindsym $mod+q kill
+bindsym $mod+d exec --no-startup-id dmenu_run -nb "$bg" -nf "$fg" -sb "$accent" -sf "$bg"
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+e exec --no-startup-id i3-nagbar -t warning -m 'Exit i3?' -B 'Yes' 'i3-msg exit'
+
+# Focus
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# Move
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+
+# Splits
+bindsym $mod+v split h
+bindsym $mod+Shift+v split v
+
+# Fullscreen
+bindsym $mod+f fullscreen toggle
+
+# Workspaces
+bindsym $mod+1 workspace 1
+bindsym $mod+2 workspace 2
+bindsym $mod+3 workspace 3
+bindsym $mod+4 workspace 4
+bindsym $mod+5 workspace 5
+bindsym $mod+6 workspace 6
+bindsym $mod+7 workspace 7
+bindsym $mod+8 workspace 8
+bindsym $mod+9 workspace 9
+bindsym $mod+0 workspace 10
+
+# Move to workspace
+bindsym $mod+Shift+1 move container to workspace 1
+bindsym $mod+Shift+2 move container to workspace 2
+bindsym $mod+Shift+3 move container to workspace 3
+bindsym $mod+Shift+4 move container to workspace 4
+bindsym $mod+Shift+5 move container to workspace 5
+bindsym $mod+Shift+6 move container to workspace 6
+bindsym $mod+Shift+7 move container to workspace 7
+bindsym $mod+Shift+8 move container to workspace 8
+bindsym $mod+Shift+9 move container to workspace 9
+bindsym $mod+Shift+0 move container to workspace 10
+
+# Layout
+bindsym $mod+b layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+
+# Float
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+space focus mode_toggle
+
+# Scratchpad
+bindsym $mod+minus scratchpad show
+bindsym $mod+Shift+minus move scratchpad
+
+# Resize
+mode "resize" {
+    bindsym h resize shrink width 10 px or 10 ppt
+    bindsym j resize grow height 10 px or 10 ppt
+    bindsym k resize shrink height 10 px or 10 ppt
+    bindsym l resize grow width 10 px or 10 ppt
+    bindsym Left resize shrink width 10 px or 10 ppt
+    bindsym Down resize grow height 10 px or 10 ppt
+    bindsym Up resize shrink height 10 px or 10 ppt
+    bindsym Right resize grow width 10 px or 10 ppt
+    bindsym Shift+h resize shrink width 50 px or 50 ppt
+    bindsym Shift+j resize grow height 50 px or 50 ppt
+    bindsym Shift+k resize shrink height 50 px or 50 ppt
+    bindsym Shift+l resize grow width 50 px or 50 ppt
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+# Window decorations
+for_window [class=".*"] border pixel 2
+default_border pixel 2
+default_floating_border pixel 2
+title_align center
+
+# Gaps (if i3-gaps is installed)
+# gaps inner 8
+# gaps outer 2
+
+# Bar
+bar {
+    status_command i3status
+    position top
+    font pango:monospace 10
+    colors {
+        background $bg
+        statusline $fg
+        separator  $dim
+        focused_workspace  $accent $accent $bg
+        active_workspace   $dim $dim $fg
+        inactive_workspace $bg $bg $dim
+        urgent_workspace   $urgent $urgent $bg
+    }
+}
+
+# Autostart
+exec_always --no-startup-id picom --config ~/.config/picom/picom.conf &
+exec_always --no-startup-id feh --bg-fill ~/wallpapers/vestige-dark.png
+exec --no-startup-id kitty &
+
+# Screenshots (maim)
+bindsym Print exec --no-startup-id maim ~/Screenshots/shot-$(date +%Y%m%d-%H%M%S).png
+bindsym $mod+Print exec --no-startup-id maim -s ~/Screenshots/shot-$(date +%Y%m%d-%H%M%S).png
+
+# Chromium with CDP
+exec --no-startup-id chromium --remote-debugging-port=9222 --no-first-run --no-default-browser-check &

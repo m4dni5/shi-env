@@ -1,0 +1,35 @@
+general {
+    colors = true
+    color_good = "#5b8c5a"
+    color_degraded = "#c9a227"
+    color_bad = "#c94427"
+    interval = 5
+}
+
+order += "disk /"
+order += "memory"
+order += "cpu_usage"
+order += "load"
+order += "tztime local"
+
+disk "/" {
+    format = "Disk: %avail"
+}
+
+memory {
+    format = "Mem: %used / %total"
+    threshold_degraded = "1G"
+    threshold_critical = "200M"
+}
+
+cpu_usage {
+    format = "CPU: %usage"
+}
+
+load {
+    format = "Load: %1min"
+}
+
+tztime local {
+    format = "%a %d %b %H:%M"
+}

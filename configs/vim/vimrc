@@ -1,0 +1,10 @@
+" --- VIMRC ---
+set nocompatible
+filetype on
+filetype indent on
+syntax on
+set nolist
+set number
+" set cursorline
+set autoindent expandtab tabstop=4 shiftwidth=4
+" --- END VIMRC ---
