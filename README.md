@@ -114,39 +114,19 @@ sudo systemctl enable lightdm
 ```bash
 git clone https://github.com/YOURUSER/shi.git
 cd shi
-
-# i3
-mkdir -p ~/.config/i3
-cp configs/i3/config ~/.config/i3/config
-
-# Kitty
-mkdir -p ~/.config/kitty
-cp configs/kitty/kitty.conf ~/.config/kitty/kitty.conf
-
-# Picom
-mkdir -p ~/.config/picom
-cp configs/picom/picom.conf ~/.config/picom/picom.conf
-
-# i3status
-mkdir -p ~/.config/i3status
-cp configs/i3status/config ~/.config/i3status/config
-
-# Tmux
-cp configs/tmux/tmux.conf ~/.tmux.conf
-
-# Vim
-cp configs/vim/vimrc ~/.vimrc
-
-# Wallpaper
-mkdir -p ~/wallpapers
-cp wallpapers/vestige-dark.png ~/wallpapers/
-
-# Bash additions (append, don't overwrite)
-cat configs/bash/bashrc >> ~/.bashrc
-
-# Reload i3
-i3-msg reload
+./install.sh
 ```
+
+The install script handles everything:
+
+- **Standalone configs** (i3, kitty, picom, i3status) are copied to `~/.config/` — these are full configs that replace the defaults.
+- **Additive configs** (bash, vim, tmux) contain only the shi-specific additions, wrapped in `# --- SHI BEGIN ---` / `# --- SHI END ---` markers.
+  - **Bash**: additions are appended to your existing `~/.bashrc` (idempotent — skips if already present).
+  - **Vim/Tmux**: existing files are backed up to `.bak` before the shi config is installed.
+
+**⚠️ Back up your existing configs first** if you have customizations you want to keep. The script creates `.bak` copies, but a manual backup is safer.
+
+**Uninstall:** Remove the block between `# --- SHI BEGIN ---` and `# --- SHI END ---` in `~/.bashrc`, `~/.vimrc`, and `~/.tmux.conf`. Restore from the `.bak` files if needed.
 
 ### 4. Agent Integration (Hermes)
 
@@ -316,7 +296,7 @@ Tmux and i3 serve different purposes but use the same navigation keys. This is i
 **Plugins (via TPM):**
 - `tmux-yank` — sync clipboard with system
 - `tmux-logging` — log pane output to file
-- `tmux-gruvbox` — dark theme
+- `tmux-tokyo-night` — night variant
 
 ### Vim — Editor
 
@@ -339,14 +319,16 @@ This is a starting point. The important settings are `expandtab` (spaces, not ta
 
 **File:** `configs/bash/bashrc`
 
-Standard Debian `.bashrc` with one addition for agent X11 access:
+Shi additions appended to your existing `.bashrc`:
 
 ```bash
-# X display for agent control
 export DISPLAY=:0
+export EDITOR=vim
+export VISUAL=$EDITOR
+set -o vi
 ```
 
-This lets any new terminal shell reach the X server. Without it, tools like `i3-msg`, `xdotool`, and `kitten @` can't find the display.
+`DISPLAY=:0` lets any new terminal shell reach the X server. Without it, tools like `i3-msg`, `xdotool`, and `kitten @` can't find the display. `set -o vi` enables Vi-mode keybindings in bash.
 
 ---
 
