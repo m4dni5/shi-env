@@ -116,6 +116,19 @@ else
   log "TPM already present"
 fi
 
+# --- Hermes skills (if Hermes is installed) ---
+HERMES_SKILLS_DIR="$HOME/.hermes/skills"
+if [ -d "$HOME/.hermes" ] && [ -d "$SCRIPT_DIR/skills" ]; then
+  for skill_dir in "$SCRIPT_DIR/skills"/*/; do
+    skill_name=$(basename "$skill_dir")
+    mkdir -p "$HERMES_SKILLS_DIR/$skill_name"
+    cp "$skill_dir"/* "$HERMES_SKILLS_DIR/$skill_name/"
+    log "Installed Hermes skill: $skill_name"
+  done
+elif [ -d "$SCRIPT_DIR/skills" ]; then
+  log "Hermes not found at ~/.hermes — skills not installed (copy manually)"
+fi
+
 # --- summary ---
 echo ""
 log "Install complete."

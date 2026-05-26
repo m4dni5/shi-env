@@ -498,6 +498,35 @@ xhost +local:
 
 ---
 
+## Skills
+
+The `skills/` directory contains Hermes Agent skills — procedural knowledge for desktop automation. These are loaded on demand, not all at once.
+
+### i3 Desktop (`skills/i3-desktop/`)
+
+Everything between the agent and the desktop: i3-msg window management, kitty remote control (`kitten @`), maim screenshots, xsel clipboard, feh wallpaper, and xdotool input simulation.
+
+Load when: moving windows, launching apps, capturing the screen, reading the clipboard, or controlling kitty programmatically.
+
+### Tmux (`skills/tmux/`)
+
+Terminal multiplexer operations: send-keys, capture-pane, copy mode, session management, coordinate long-running work across panes.
+
+Load when: working inside terminal sessions, watching builds, extracting text from scrollback, or coordinating parallel work.
+
+### Installing Skills
+
+```bash
+# Copy to Hermes
+cp -r skills/i3-desktop ~/.hermes/skills/
+cp -r skills/tmux ~/.hermes/skills/
+
+# Or use the install script (does this automatically)
+./install.sh
+```
+
+---
+
 ## Customization
 
 ### Theming
