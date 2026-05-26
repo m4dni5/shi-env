@@ -79,7 +79,8 @@ sudo apt-get install -y \
   kitty \
   picom \
   feh \
-  maim xdotool xsel \
+  maim xdotool xsel \\
+  vim-gtk3 \\
   chromium lightdm
 ```
 
@@ -92,6 +93,7 @@ sudo apt-get install -y \
 - **maim** — modern screenshot tool. Replaces scrot (unmaintained) and ImageMagick's import (overkill).
 - **xdotool** — X11 automation for non-kitty apps. Send keystrokes, move windows, simulate input.
 - **xsel** — clipboard access from the terminal. Required by tmux-yank for system clipboard integration. Also gives the agent read/write access to the clipboard via `DISPLAY=:0 xsel`.
+- **vim-gtk3** — Vim with GTK3 GUI support, which enables `+clipboard`. This lets Vim share the system clipboard via `set clipboard=unnamedplus`. Plain `vim` on Debian doesn't have clipboard support compiled in.
 - **chromium** — browser with Chrome DevTools Protocol (CDP) for agent automation. The agent navigates, clicks, fills forms, and reads pages programmatically.
 - **lightdm** — display manager with autologin support.
 
@@ -312,9 +314,10 @@ filetype indent on
 syntax on
 set number
 set autoindent expandtab tabstop=4 shiftwidth=4
+set clipboard=unnamedplus
 ```
 
-This is a starting point. The important settings are `expandtab` (spaces, not tabs) and `shiftwidth=4` (standard indent). Add what you need.
+This is a starting point. The important settings are `expandtab` (spaces, not tabs), `shiftwidth=4` (standard indent), and `clipboard=unnamedplus` (system clipboard integration — yank in vim, paste anywhere). Requires `vim-gtk3` — the plain `vim` package on Debian doesn't compile with clipboard support.
 
 ### Bash — Shell
 

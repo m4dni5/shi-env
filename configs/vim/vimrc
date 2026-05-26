@@ -5,4 +5,5 @@ filetype indent on
 syntax on
 set number
 set autoindent expandtab tabstop=4 shiftwidth=4
+set clipboard=unnamedplus
 " --- SHI END ---

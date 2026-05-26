@@ -47,7 +47,7 @@ log "Working from: $SCRIPT_DIR"
 echo ""
 
 # --- check required packages ---
-REQUIRED_PKGS=(i3 i3status kitty picom feh maim xdotool xsel chromium)
+REQUIRED_PKGS=(i3 i3status kitty picom feh maim xdotool xsel vim chromium)
 MISSING=()
 for pkg in "${REQUIRED_PKGS[@]}"; do
   command -v "$pkg" &>/dev/null || MISSING+=("$pkg")
@@ -55,6 +55,7 @@ done
 if [ ${#MISSING[@]} -gt 0 ]; then
   warn "Missing packages: ${MISSING[*]}"
   warn "Install with: sudo apt-get install -y ${MISSING[*]}"
+  warn "(Note: for vim, install vim-gtk3 for clipboard support)"
   echo ""
 fi
 
