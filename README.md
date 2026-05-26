@@ -1,19 +1,25 @@
-# Ricing Your Rig with Hermes Agent
+# Shi — A Desktop for Humans and Agents
 
-A complete guide to building a CLI-controllable, Vi-driven desktop environment on Debian, designed for humans and AI agents to share.
+A CLI-first, Vi-driven desktop environment for Debian, designed so both you and an AI agent can see, control, and automate every layer.
 
-**What you get:**
-- i3 tiling window manager with Vi-style navigation
-- Kitty terminal with remote control (agent can drive it)
-- Picom compositor for transparency and effects
-- PipeWire audio stack
-- Chromium with CDP for browser automation
-- Everything controllable from the command line
+**Shi (勢)** — from Sun Tzu's *Art of War*: the strategic advantage stored in favorable positioning. Like a drawn crossbow, the right arrangement of tools creates potential that can be released at the decisive moment. This desktop is that arrangement.
 
-**What you need:**
+---
+
+## What You Get
+
+- **i3** tiling window manager — Vi-style navigation, scriptable via `i3-msg`
+- **Kitty** terminal — GPU-accelerated with remote control (`kitten @` protocol)
+- **Picom** compositor — transparency, blur, shadows
+- **Chromium** with CDP — browser automation from the command line
+- **Tmux** integration — terminal multiplexing with shared Vi keys
+- **Everything CLI-controllable** — the agent doesn't need to fake mouse clicks
+
+## What You Need
+
 - Debian 12+ (tested on Trixie/13)
-- A display (monitor, not headless)
-- Sudo access
+- A connected display
+- sudo access
 - ~30 minutes
 
 ---
@@ -22,13 +28,14 @@ A complete guide to building a CLI-controllable, Vi-driven desktop environment o
 
 This isn't about making your desktop look pretty (though it does). It's about building a workspace where both you and an AI agent can operate — moving windows, launching programs, reading screens, taking screenshots — all through CLI tools.
 
-Every tool here has a command-line interface. Every keybinding follows Vi conventions. The agent doesn't need to fake mouse clicks or guess at screen coordinates — it talks to i3, kitty, and Chromium through their native IPC protocols.
+Every tool here has a command-line interface. Every keybinding follows Vi conventions. The agent talks to i3, kitty, and Chromium through their native IPC protocols.
 
 **Design principles:**
+
 1. **CLI-first** — if you can't control it from the terminal, it doesn't belong here
-2. **Vi keys everywhere** — h/j/k/l for navigation in i3, tmux, vim, resize mode
+2. **Vi keys everywhere** — `h/j/k/l` for navigation in i3, tmux, vim, resize mode
 3. **Agent-transparent** — the agent can see, control, and automate every layer
-4. **Minimal dependencies** — nothing heavy, nothing that needs a full desktop environment
+4. **Minimal** — nothing heavy, nothing that needs a full desktop environment
 5. **Persistent** — everything auto-starts on login, survives reboots
 
 ---
@@ -46,11 +53,12 @@ Every tool here has a command-line interface. Every keybinding follows Vi conven
 │  │            i3bar (top)               │   │
 │  └──────────────────────────────────────┘   │
 ├─────────────────────────────────────────────┤
-│  PipeWire  │  Picom  │  feh (wallpaper)    │
+│  Picom compositor  │  feh (wallpaper)       │
 └─────────────────────────────────────────────┘
 ```
 
 **Control stack:**
+
 | Layer | CLI Tool | Agent Access |
 |-------|----------|--------------|
 | Window manager | `i3-msg` | `DISPLAY=:0 i3-msg` |
@@ -58,7 +66,6 @@ Every tool here has a command-line interface. Every keybinding follows Vi conven
 | Browser | CDP (port 9222) | `browser_*` tools |
 | Screenshots | `maim` | `DISPLAY=:0 maim` |
 | Keyboard/mouse | `xdotool` | `DISPLAY=:0 xdotool` |
-| Audio | `wpctl` | Direct CLI |
 
 ---
 
@@ -73,42 +80,23 @@ sudo apt-get install -y \
   picom \
   feh \
   maim xdotool \
-  pipewire wireplumber pipewire-alsa pipewire-pulse \
-  alsa-utils \
-  portaudio19-dev \
   chromium lightdm
 ```
 
 **Why these:**
-- **i3** — tiling WM, scriptable via `i3-msg`, Vi-native navigation
-- **kitty** — GPU-accelerated terminal with remote control protocol (`kitten @`)
-- **picom** — compositor for transparency, shadows, blur
-- **feh** — lightweight wallpaper setter
-- **maim** — modern screenshot tool (replaces `scrot`)
-- **xdotool** — X11 automation (send keystrokes, move windows)
-- **pipewire** — modern audio server with ALSA resampling
-- **portaudio19-dev** — C library that `sounddevice` (Python) wraps
-- **chromium** — browser with CDP for agent automation
-- **lightdm** — display manager with autologin
 
-### 2. Audio Stack
+- **i3** — tiling WM, scriptable via `i3-msg`, Vi-native navigation. Chosen over Sway (X11 ecosystem is more mature for agent tooling) and Awesome/Xmonad (simpler config, better CLI surface).
+- **kitty** — GPU-accelerated terminal with a remote control protocol. This is the killer feature — `kitten @` lets the agent send commands, read terminal contents, and manage windows without faking keystrokes. Alacritty and WezTerm don't have this.
+- **picom** — compositor for transparency, shadows, blur. The successor to Compton (dead) and xcompmgr (too minimal). Without picom, kitty's `background_opacity` is silently ignored.
+- **feh** — lightweight wallpaper setter. One command, no dependencies.
+- **maim** — modern screenshot tool. Replaces scrot (unmaintained) and ImageMagick's import (overkill).
+- **xdotool** — X11 automation for non-kitty apps. Send keystrokes, move windows, simulate input.
+- **chromium** — browser with Chrome DevTools Protocol (CDP) for agent automation. The agent navigates, clicks, fills forms, and reads pages programmatically.
+- **lightdm** — display manager with autologin support.
 
-PipeWire replaces PulseAudio and ALSA as the audio server. The key package is `pipewire-alsa` — it creates a virtual ALSA device that routes through PipeWire, handling sample rate conversion automatically. Without it, USB microphones that only support 44.1/48kHz will fail when voice mode requests 16kHz.
+### 2. Display Manager
 
-```bash
-# Enable user services
-systemctl --user enable --now pipewire pipewire-pulse wireplumber
-```
-
-Verify:
-```bash
-wpctl status
-# Should show your audio devices with defaults marked (*)
-```
-
-### 3. Display Manager
-
-Configure LightDM for autologin:
+Configure LightDM for autologin into i3:
 
 ```bash
 sudo tee -a /etc/lightdm/lightdm.conf << 'EOF'
@@ -121,12 +109,11 @@ EOF
 sudo systemctl enable lightdm
 ```
 
-### 4. Install the Configs
+### 3. Install the Configs
 
 ```bash
-# Clone this repo
-git clone https://github.com/YOURUSER/ricing-your-rig.git
-cd ricing-your-rig
+git clone https://github.com/YOURUSER/shi.git
+cd shi
 
 # i3
 mkdir -p ~/.config/i3
@@ -161,9 +148,9 @@ cat configs/bash/bashrc >> ~/.bashrc
 i3-msg reload
 ```
 
-### 5. Hermes Agent Integration
+### 4. Agent Integration (Hermes)
 
-If you're running Hermes Agent, add the display environment and browser CDP:
+If you're running Hermes Agent, wire up X11 access and browser control:
 
 ```bash
 # Let agent tools access X11
@@ -184,68 +171,108 @@ hermes config set browser.cdp_url "http://localhost:9222"
 
 The i3 config is the backbone. Every decision here serves the CLI-first principle.
 
+**Why Super (Mod4) and not Alt:** Alt conflicts with terminal applications — tmux, vim, bash, and most CLI tools all use Alt for their own bindings. Super sits unused under the left thumb.
+
+**Colors:** Five variables control the entire theme:
+
+```
+set $bg       #1a1a2e    # deep navy
+set $fg       #c8c8d4    # muted silver
+set $accent   #c9a227    # amber gold
+set $urgent   #c94427    # rust red
+set $dim      #4a4a5e    # grey
+```
+
+Change these five values and the entire desktop rethemes — i3 bar, dmenu, window decorations.
+
 **Navigation (Vi-style):**
-```
-$h/j/k/l$     — focus windows (left/down/up/right)
-$+Shift+h/j/k/l$ — move windows
-$+1-0$        — switch workspaces
-$+Shift+1-0$  — move window to workspace
-```
 
-**Why $mod (Super) instead of Alt:** Alt conflicts with terminal applications (tmux, vim). Super is unused by most terminal tools and sits comfortably under the left thumb.
+| Key | Action |
+|-----|--------|
+| `$mod+h/j/k/l` | Focus left/down/up/right |
+| `$mod+Shift+h/j/k/l` | Move window |
+| `$mod+1-0` | Switch workspace |
+| `$mod+Shift+1-0` | Move window to workspace |
 
-**Resize mode:**
-```
-$r$            — enter resize mode
-h/j/k/l       — 10px adjustments
-Shift+h/j/k/l — 50px jumps
-Enter/Escape  — exit
-```
+**Layout:**
 
-**Floating windows:**
-```
-$+Shift+Space$ — toggle float
-$+Space$       — focus toggle (tiled ↔ floating)
-$+left-drag$   — move floating window
-$+right-drag$  — resize floating window
-```
+| Key | Action |
+|-----|--------|
+| `$mod+v` | Split horizontal |
+| `$mod+Shift+v` | Split vertical |
+| `$mod+b` | Stacking layout |
+| `$mod+w` | Tabbed layout |
+| `$mod+e` | Toggle split |
+| `$mod+f` | Fullscreen |
+
+**Floating:**
+
+| Key | Action |
+|-----|--------|
+| `$mod+Shift+Space` | Toggle float |
+| `$mod+Space` | Focus toggle (tiled ↔ floating) |
+| `$mod+left-drag` | Move floating window |
+| `$mod+right-drag` | Resize floating window |
 
 The `floating_modifier $mod` directive enables mouse-based move/resize on floating windows. Without it, you can only resize via keyboard.
 
-**Bar:** Top-positioned, themed to match the color scheme. `i3status` feeds it system metrics.
+**Resize mode** (`$mod+r` to enter):
 
-**Autostart:** Picom (compositor), feh (wallpaper), kitty (terminal), and Chromium (browser with CDP) all launch automatically.
+| Key | Action |
+|-----|--------|
+| `h/j/k/l` | 10px adjustments |
+| `Shift+h/j/k/l` | 50px jumps |
+| `Arrow keys` | 10px adjustments |
+| `Enter` / `Escape` | Exit resize mode |
+
+**Window decorations:** 2px pixel borders, no title bars. Minimal and clean.
+
+**Bar:** Top-positioned i3status with the theme colors. `i3status` feeds system metrics — disk, memory, CPU, load, time. Uses plain text labels instead of icon fonts for universal compatibility.
+
+**Autostart:** Picom (compositor), feh (wallpaper), kitty (terminal), and Chromium (browser with CDP) all launch automatically on login.
+
+**Screenshots:**
+
+| Key | Action |
+|-----|--------|
+| `Print` | Full screen screenshot → `~/Screenshots/` |
+| `$mod+Print` | Selection mode (drag to capture region) |
 
 ### Kitty — Terminal
 
 **File:** `configs/kitty/kitty.conf`
 
-Kitty is chosen over alacritty/urxvt for one reason: **remote control**. The `kitten @` protocol lets the agent send commands, read terminal contents, and manage windows without faking keystrokes.
+Kitty is chosen over alacritty and urxvt for one reason: **remote control**. The `kitten @` protocol lets the agent send commands, read terminal contents, and manage windows without faking keystrokes.
 
 **Key settings:**
+
 ```
 allow_remote_control yes
 listen_on unix:/tmp/kitty-ipc
 ```
 
-The socket has a PID suffix (`/tmp/kitty-ipc-{PID}`). Discover it with:
+The socket gets a PID suffix at runtime (`/tmp/kitty-ipc-{PID}`). Discover it with:
+
 ```bash
 ls -t /tmp/kitty-ipc-* | head -1
 ```
 
 **Agent commands:**
+
 ```bash
 SOCK=$(ls -t /tmp/kitty-ipc-* | head -1)
-kitten @ --to unix:$SOCK ls                    # list windows
-kitten @ --to unix:$SOCK send-text --match id:1 'command\n'
-kitten @ --to unix:$SOCK launch --type=window htop
-kitten @ --to unix:$SOCK get-text --match id:1
-kitten @ --to unix:$SOCK close-window --match id:2
+
+kitten @ --to unix:$SOCK ls                            # list windows/tabs
+kitten @ --to unix:$SOCK send-text --match id:1 'cmd'  # type into window
+kitten @ --to unix:$SOCK launch --type=window htop      # open new window
+kitten @ --to unix:$SOCK get-text --match id:1          # read terminal contents
+kitten @ --to unix:$SOCK close-window --match id:2      # close window
+kitten @ --to unix:$SOCK focus-window --match id:1      # switch focus
 ```
 
-**Theme:** Mountain Twilight — deep navy backgrounds (`#1a1a2e`), muted silver text, amber gold accents. 95% opacity with picom blur behind.
+**Theme:** Mountain Twilight — deep navy backgrounds (`#1a1a2e`), muted silver text, amber gold accents. 95% opacity with picom providing the blur behind.
 
-**Cursor:** `cursor #c9a227` (amber). Note: kitty 0.41.1 renamed `cursor_color` to `cursor`.
+**Cursor note:** kitty 0.41.1 renamed `cursor_color` to `cursor`. If you're on an older version, use `cursor_color` instead.
 
 ### Picom — Compositor
 
@@ -253,31 +280,14 @@ kitten @ --to unix:$SOCK close-window --match id:2
 
 Picom adds the visual layer: transparency, blur, shadows, fading. Without it, kitty's `background_opacity` setting is silently ignored.
 
-**Key effects:**
+**Effects:**
+
 - **Transparency:** Focused kitty at 90%, unfocused at 80%. Chromium stays at 100%.
-- **Blur:** `dual_kawase` at strength 3 — frosted glass behind transparent windows
-- **Shadows:** 12px radius, 0.6 opacity — subtle depth
-- **Fading:** 0.03 step transitions — smooth but not slow
+- **Blur:** `dual_kawase` at strength 3 — frosted glass behind transparent windows. Keeps text readable even with a busy wallpaper.
+- **Shadows:** 12px radius, 0.6 opacity — subtle depth without being distracting.
+- **Fading:** 0.03 step transitions — smooth but not slow.
 
-**Backend:** `glx` with vsync. If you get tearing, try `xrender`.
-
-**Why picom over compton:** Compton is dead. Picom is its actively-maintained fork. xcompmgr is too minimal.
-
-### i3status — Bar
-
-**File:** `configs/i3status/config`
-
-Clean text labels instead of Nerd Font icons. Icons require a patched Nerd Font and break when the font doesn't have the glyphs. Plain text is universal.
-
-```
-Disk: 42G
-Mem: 2.3G / 15.5G
-CPU: 4%
-Load: 0.42
-Mon 26 May 07:15
-```
-
-Colors: green (good), amber (degraded), rust red (critical).
+**Backend:** `glx` with vsync. If you get screen tearing, try switching to `xrender`.
 
 ### Tmux — Terminal Multiplexer
 
@@ -285,21 +295,23 @@ Colors: green (good), amber (degraded), rust red (critical).
 
 Tmux and i3 serve different purposes but use the same navigation keys. This is intentional — muscle memory transfers.
 
-**i3 manages windows.** Tmux manages terminal sessions within a single window.
+**i3 manages windows across the desktop.** Tmux manages terminal sessions within a single window.
 
-**Navigation (same keys as i3):**
-```
-Alt+h/j/k/l — switch panes (no prefix needed)
-```
+**Navigation — same keys as i3, no prefix needed:**
 
-**Vi mode:**
-```
-set-window-option -g mode-keys vi
-```
+| Key | Action |
+|-----|--------|
+| `Alt+h/j/k/l` | Switch panes |
+| `Ctrl+b %` | Split horizontal |
+| `Ctrl+b "` | Split vertical |
+| `Ctrl+b c` | New window |
+| `Ctrl+b n/p` | Next/prev window |
+| `Ctrl+b [` | Copy mode (Vi-style) |
+| `Ctrl+b z` | Zoom pane (fullscreen toggle) |
 
-This enables Vi-style copy mode: `Space` to start selection, `h/j/k/l` to navigate, `Enter` to copy.
+**Vi mode:** `set-window-option -g mode-keys vi` — enables Vi-style copy mode. `Space` starts selection, `h/j/k/l` navigates, `Enter` copies.
 
-**Mouse:** Enabled (`set -g mouse on`) for pane resizing and scrollback. The agent uses tmux's `send-keys` and `capture-pane` for programmatic access.
+**Mouse:** Enabled for pane resizing and scrollback. The agent uses tmux's `send-keys` and `capture-pane` for programmatic access.
 
 **Plugins (via TPM):**
 - `tmux-yank` — sync clipboard with system
@@ -311,7 +323,8 @@ This enables Vi-style copy mode: `Space` to start selection, `h/j/k/l` to naviga
 **File:** `configs/vim/vimrc`
 
 Minimal config focused on code editing:
-```
+
+```vim
 set nocompatible
 filetype on
 filetype indent on
@@ -320,7 +333,7 @@ set number
 set autoindent expandtab tabstop=4 shiftwidth=4
 ```
 
-**Why so minimal:** Vim config is personal. This is a starting point. The important thing is `expandtab` (spaces, not tabs) and `shiftwidth=4` (standard indent).
+This is a starting point. The important settings are `expandtab` (spaces, not tabs) and `shiftwidth=4` (standard indent). Add what you need.
 
 ### Bash — Shell
 
@@ -329,29 +342,33 @@ set autoindent expandtab tabstop=4 shiftwidth=4
 Standard Debian `.bashrc` with one addition for agent X11 access:
 
 ```bash
-# X display for i3 agent control
+# X display for agent control
 export DISPLAY=:0
 ```
 
-This lets any new terminal shell access the X server. Without it, tools like `i3-msg`, `xdotool`, and `kitten @` can't find the display.
+This lets any new terminal shell reach the X server. Without it, tools like `i3-msg`, `xdotool`, and `kitten @` can't find the display.
 
 ---
 
 ## Agent Control Reference
 
+Quick reference for everything the agent can do.
+
 ### i3 Window Manager
+
 ```bash
-DISPLAY=:0 i3-msg reload                    # reload config
-DISPLAY=:0 i3-msg 'workspace 2'            # switch workspace
-DISPLAY=:0 i3-msg '[class="kitty"] kill'   # close all kitty windows
-DISPLAY=:0 i3-msg -t get_tree              # full window tree (JSON)
-DISPLAY=:0 i3-msg -t get_outputs           # monitor info
+DISPLAY=:0 i3-msg reload                     # reload config
+DISPLAY=:0 i3-msg 'workspace 2'              # switch workspace
+DISPLAY=:0 i3-msg '[class="kitty"] kill'     # close all kitty windows
+DISPLAY=:0 i3-msg -t get_tree                # full window tree (JSON)
+DISPLAY=:0 i3-msg -t get_outputs             # monitor info
 ```
 
 ### Kitty Terminal
+
 ```bash
 SOCK=$(ls -t /tmp/kitty-ipc-* | head -1)
-kitten @ --to unix:$SOCK ls                # list all windows
+kitten @ --to unix:$SOCK ls                  # list all windows
 kitten @ --to unix:$SOCK send-text --match id:1 'echo hello\n'
 kitten @ --to unix:$SOCK get-text --match id:1
 kitten @ --to unix:$SOCK launch --type=window htop
@@ -359,40 +376,36 @@ kitten @ --to unix:$SOCK close-window --match id:2
 ```
 
 ### Browser (CDP)
+
 ```bash
-curl -s http://localhost:9222/json/version  # verify CDP
-curl -s http://localhost:9222/json          # list tabs
+curl -s http://localhost:9222/json/version    # verify CDP is running
+curl -s http://localhost:9222/json            # list open tabs
 # Or use Hermes browser_* tools directly
 ```
 
 ### Screenshots
-```bash
-DISPLAY=:0 maim ~/shot.png                  # full screen
-DISPLAY=:0 maim -s ~/shot.png              # selection
-DISPLAY=:0 maim -i WINDOW_ID ~/shot.png    # specific window
-```
 
-### Audio
 ```bash
-wpctl status                               # show devices
-wpctl set-volume 48 0.8                    # set sink volume
-wpctl set-default-sink 48                  # set default output
-wpctl set-default-source 49                # set default input
+DISPLAY=:0 maim ~/shot.png                   # full screen
+DISPLAY=:0 maim -s ~/shot.png                # selection (drag to capture)
+DISPLAY=:0 maim -i WINDOW_ID ~/shot.png      # specific window
 ```
 
 ### Tmux
+
 ```bash
-tmux list-panes -a                         # list all panes
-tmux capture-pane -p -J -t %0 -S -100     # capture pane output
-tmux send-keys -t %0 'command' Enter      # send command to pane
-tmux new-session -d -s build               # new named session
+tmux list-panes -a                           # list all panes
+tmux capture-pane -p -J -t %0 -S -100       # capture pane output
+tmux send-keys -t %0 'command' Enter        # send command to pane
+tmux new-session -d -s build                 # new named session
 ```
 
 ---
 
 ## Keyboard Reference Card
 
-### i3 (Global)
+### Global (i3)
+
 | Key | Action |
 |-----|--------|
 | `$mod+Return` | Open kitty |
@@ -407,13 +420,14 @@ tmux new-session -d -s build               # new named session
 | `$mod+f` | Fullscreen |
 | `$mod+Shift+Space` | Toggle float |
 | `$mod+Space` | Focus toggle |
-| `$mod+r` | Resize mode |
+| `$mod+r` | Enter resize mode |
 | `$mod+Shift+r` | Reload config |
 | `$mod+Shift+e` | Exit i3 |
 | `Print` | Screenshot |
 | `$mod+Print` | Screenshot selection |
 
-### Tmux (Inside Terminal)
+### Inside Terminal (Tmux)
+
 | Key | Action |
 |-----|--------|
 | `Alt+h/j/k/l` | Switch pane |
@@ -425,84 +439,106 @@ tmux new-session -d -s build               # new named session
 | `Ctrl+b z` | Zoom pane |
 
 ### Resize Mode (i3)
+
 | Key | Action |
 |-----|--------|
 | `h/j/k/l` | 10px adjustment |
 | `Shift+h/j/k/l` | 50px jump |
 | `Arrow keys` | 10px adjustment |
-| `Enter/Escape` | Exit mode |
+| `Enter` / `Escape` | Exit mode |
 
 ---
 
 ## Troubleshooting
 
-### Audio: "Invalid sample rate" in voice mode
-**Cause:** Raw ALSA device doesn't support the requested sample rate.
-**Fix:** Install `pipewire-alsa` and restart the Hermes session. The new `default` device handles resampling.
-
-### Kitty: Config not loading
-**Cause:** `cursor_color` renamed to `cursor` in kitty 0.41.1.
-**Fix:** Use `cursor` in kitty.conf.
-
-### Kitty: Transparency not working
-**Cause:** No compositor running.
-**Fix:** Start picom. Without it, `background_opacity` is silently ignored.
-
 ### i3: "Unable to find configuration file"
-**Cause:** No config file exists.
-**Fix:** Copy the config from this repo to `~/.config/i3/config`.
+
+No config file exists. Copy from this repo:
+
+```bash
+cp configs/i3/config ~/.config/i3/config
+```
 
 ### LightDM: Login loop
-**Cause:** `/var/run/utmpx` missing (common on minimal/container installs).
-**Fix:** `sudo touch /var/run/utmpx && sudo chmod 644 /var/run/utmpx`
+
+`/var/run/utmpx` missing (common on minimal/container installs):
+
+```bash
+sudo touch /var/run/utmpx && sudo chmod 644 /var/run/utmpx
+```
+
+### Kitty: Config not loading
+
+`cursor_color` was renamed to `cursor` in kitty 0.41.1. Use `cursor` in kitty.conf.
+
+### Kitty: Transparency not working
+
+No compositor running. Start picom — without it, `background_opacity` is silently ignored.
 
 ### i3status: Broken icons in bar
-**Cause:** Nerd Font glyphs in i3status config, but the font doesn't have them.
-**Fix:** Use plain text labels (see `configs/i3status/config`).
+
+Nerd Font glyphs require a patched font. This config uses plain text labels instead. If you see boxes or question marks, switch to the plain labels in `configs/i3status/config`.
 
 ### Browser tools: "Could not connect"
-**Cause:** Chromium not running with CDP, or wrong `cdp_url`.
-**Fix:** Launch with `--remote-debugging-port=9222` and set `hermes config set browser.cdp_url "http://localhost:9222"`
+
+Chromium needs to run with CDP enabled:
+
+```bash
+chromium --remote-debugging-port=9222
+```
+
+Then set in Hermes:
+
+```bash
+hermes config set browser.cdp_url "http://localhost:9222"
+```
 
 ### Agent can't access X11
-**Cause:** No `DISPLAY` variable set in the terminal session.
-**Fix:** Add `export DISPLAY=:0` to `.bashrc` and run `xhost +local:`.
+
+The terminal session needs the `DISPLAY` variable:
+
+```bash
+echo 'export DISPLAY=:0' >> ~/.bashrc
+xhost +local:
+```
 
 ---
 
 ## Customization
 
-### Changing the Theme
+### Theming
 
-All colors are defined as variables at the top of the i3 config:
+All colors are defined as five variables at the top of the i3 config. Change these and everything follows:
+
 ```
-set $bg       #1a1a2e
-set $fg       #c8c8d4
-set $accent   #c9a227
-set $urgent   #c94427
-set $dim      #4a4a5e
+set $bg       #1a1a2e    # background
+set $fg       #c8c8d4    # foreground text
+set $accent   #c9a227    # highlights and focus
+set $urgent   #c94427    # alerts
+set $dim      #4a4a5e    # inactive elements
 ```
 
-Change these five values and the entire desktop rethemes — i3 bar, dmenu, window decorations.
+Match the kitty theme to the same palette in `kitty.conf`.
 
-Match the kitty theme to the same palette in `~/.config/kitty/kitty.conf`.
+### Gaps
 
-### Adding Gaps
+If you install `i3-gaps`, uncomment in the i3 config:
 
-If you install `i3-gaps`:
 ```
 gaps inner 8
 gaps outer 2
 ```
 
-### Different Wallpaper
+### Wallpaper
 
 Replace `~/wallpapers/vestige-dark.png` and update the feh command in i3 config:
+
 ```
 exec_always --no-startup-id feh --bg-fill ~/wallpapers/your-wallpaper.png
 ```
 
 Generate wallpapers with AI:
+
 ```bash
 hermes chat -q "Generate a dark minimalist landscape wallpaper"
 ```
@@ -511,12 +547,12 @@ hermes chat -q "Generate a dark minimalist landscape wallpaper"
 
 ## Contributing
 
-This is a living document. If you find a better way to do something, a missing step, or a broken command — open an issue or PR.
-
 Config files in `configs/` are the source of truth. The README explains why.
+
+If you find a better way to do something, a missing step, or a broken command — open an issue or PR.
 
 ---
 
 ## License
 
-MIT. Do whatever you want with it.
+MIT.
