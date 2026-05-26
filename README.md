@@ -43,18 +43,18 @@ Every tool here has a command-line interface. Every keybinding follows Vi conven
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│                    i3                        │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
-│  │  kitty   │  │  kitty   │  │ chromium  │  │
-│  │  + tmux  │  │  + bash  │  │  (CDP)   │  │
-│  └──────────┘  └──────────┘  └──────────┘  │
-│  ┌──────────────────────────────────────┐   │
-│  │            i3bar (top)               │   │
-│  └──────────────────────────────────────┘   │
-├─────────────────────────────────────────────┤
-│  Picom compositor  │  feh (wallpaper)       │
-└─────────────────────────────────────────────┘
+┌───────────────────────────────────────────────┐
+│                     i3                        │
+│  ┌────────────┐ ┌────────────┐ ┌───────────┐  │
+│  │   kitty    │ │   kitty    │ │ chromium  │  │
+│  │  + tmux    │ │  + bash    │ │  (CDP)    │  │
+│  └────────────┘ └────────────┘ └───────────┘  │
+│  ┌─────────────────────────────────────────┐  │
+│  │            i3bar (top)                  │  │
+│  └─────────────────────────────────────────┘  │
+├───────────────────────────────────────────────┤
+│  Picom compositor  │  feh (wallpaper)         │
+└───────────────────────────────────────────────┘
 ```
 
 **Control stack:**
@@ -102,6 +102,11 @@ sudo apt-get install -y \
 Configure LightDM for autologin into i3:
 
 ```bash
+# Add user to autologin group (required for LightDM autologin)
+sudo groupadd -r autologin
+sudo gpasswd -a $USER autologin
+
+# Configure LightDM
 sudo tee -a /etc/lightdm/lightdm.conf << 'EOF'
 
 [Seat:*]
