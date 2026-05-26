@@ -46,6 +46,18 @@ log "Shi (勢) — Desktop environment install"
 log "Working from: $SCRIPT_DIR"
 echo ""
 
+# --- check required packages ---
+REQUIRED_PKGS=(i3 i3status kitty picom feh maim xdotool xsel chromium)
+MISSING=()
+for pkg in "${REQUIRED_PKGS[@]}"; do
+  command -v "$pkg" &>/dev/null || MISSING+=("$pkg")
+done
+if [ ${#MISSING[@]} -gt 0 ]; then
+  warn "Missing packages: ${MISSING[*]}"
+  warn "Install with: sudo apt-get install -y ${MISSING[*]}"
+  echo ""
+fi
+
 # --- i3: standalone config, copy as-is ---
 mkdir -p "$HOME/.config/i3"
 cp "$SCRIPT_DIR/configs/i3/config" "$HOME/.config/i3/config"

@@ -79,7 +79,7 @@ sudo apt-get install -y \
   kitty \
   picom \
   feh \
-  maim xdotool \
+  maim xdotool xsel \
   chromium lightdm
 ```
 
@@ -91,6 +91,7 @@ sudo apt-get install -y \
 - **feh** — lightweight wallpaper setter. One command, no dependencies.
 - **maim** — modern screenshot tool. Replaces scrot (unmaintained) and ImageMagick's import (overkill).
 - **xdotool** — X11 automation for non-kitty apps. Send keystrokes, move windows, simulate input.
+- **xsel** — clipboard access from the terminal. Required by tmux-yank for system clipboard integration. Also gives the agent read/write access to the clipboard via `DISPLAY=:0 xsel`.
 - **chromium** — browser with Chrome DevTools Protocol (CDP) for agent automation. The agent navigates, clicks, fills forms, and reads pages programmatically.
 - **lightdm** — display manager with autologin support.
 
@@ -363,6 +364,14 @@ kitten @ --to unix:$SOCK close-window --match id:2
 curl -s http://localhost:9222/json/version    # verify CDP is running
 curl -s http://localhost:9222/json            # list open tabs
 # Or use Hermes browser_* tools directly
+```
+
+### Clipboard
+
+```bash
+DISPLAY=:0 xsel --clipboard --output          # read clipboard
+DISPLAY=:0 xsel --clipboard --input < file.txt # write to clipboard
+DISPLAY=:0 echo "text" | xsel --clipboard      # pipe to clipboard
 ```
 
 ### Screenshots
