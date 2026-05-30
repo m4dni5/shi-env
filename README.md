@@ -532,6 +532,61 @@ cp -r skills/tmux ~/.hermes/skills/
 
 ---
 
+## Recommended Tools
+
+Not included in the core install, but worth adding. These all follow the CLI-first, Vi-key philosophy:
+
+```bash
+sudo apt-get install -y fzf ripgrep fd-find dunst ranger htop
+```
+
+| Tool | What it does | Why it fits |
+|------|-------------|-------------|
+| **fzf** | Fuzzy finder for files, commands, history | The single biggest CLI productivity multiplier. `Ctrl+r` for history, `Ctrl+t` for files. Agent can use it for interactive discovery. |
+| **ripgrep** (`rg`) | Fast grep replacement | 10-100x faster than grep on large codebases. Agent's `search_files` tool uses it internally. |
+| **fd** | Fast `find` replacement | Cleaner syntax than `find`, respects `.gitignore`. Agent's file discovery benefits from it. |
+| **dunst** | Notification daemon | i3 doesn't have one. Without it, system notifications, cron alerts, and battery warnings are silently dropped. Lightweight, CLI-configurable via `dunstctl`. |
+| **ranger** | Terminal file manager with Vi keys | Better than `ls`/`cd`/`cat` for browsing the filesystem. Image previews with kitty's icat protocol. |
+| **htop** | Process monitor | Interactive `top` replacement with Vi-style navigation and tree view. |
+| **betterlockscreen** | Lock screen with blurred wallpaper | Wraps i3lock with the wallpaper blurred. Requires `i3lock`. Install from GitHub — not in Debian repos. |
+
+### Notifications (dunst)
+
+After installing dunst, add it to i3 autostart:
+
+```
+exec --no-startup-id dunst &
+```
+
+Test with:
+
+```bash
+notify-send "Shi" "Desktop notifications working"
+```
+
+### Lock Screen (betterlockscreen)
+
+```bash
+# Install from GitHub (not in Debian repos)
+git clone https://github.com/betterlockscreen/betterlockscreen.git
+cd betterlockscreen
+sudo cp betterlockscreen /usr/local/bin/
+
+# Generate blurred wallpaper variants
+betterlockscreen -u ~/wallpapers/vestige-dark.png
+
+# Lock
+betterlockscreen -l
+```
+
+Add to i3 config:
+
+```
+bindsym $mod+x exec --no-startup-id betterlockscreen -l
+```
+
+---
+
 ## Customization
 
 ### Theming
