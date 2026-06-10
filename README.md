@@ -120,7 +120,7 @@ sudo systemctl enable lightdm
 ### 3. Install the Configs
 
 ```bash
-git clone https://github.com/YOURUSER/shi.git
+git clone https://github.com/m4dni5/shi-env.git
 cd shi
 ./install.sh
 ```
