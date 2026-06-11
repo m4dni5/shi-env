@@ -57,6 +57,8 @@ xsel (clipboard) — clipboard access
 **maim** captures what's on screen.
 **xsel** reads/writes the system clipboard.
 
+> **Reference:** `references/quake-tui-toggle.md` — full template for a quake-style TUI dropdown in i3 with scratchpad toggle.
+
 ---
 
 ## OBSERVE — See What's on the Desktop
@@ -116,7 +118,7 @@ SOCK=$(ls -t /tmp/kitty-ipc-* | head -1)
 DISPLAY=:0 kitten @ --to "unix:$SOCK" ls
 ```
 
-Parse for a quick window list:
+Parse for a quick window list (by title):
 
 ```bash
 SOCK=$(ls -t /tmp/kitty-ipc-* | head -1)
@@ -130,6 +132,27 @@ for os_win in data:
             print(f'  [{win[\"id\"]}] {win.get(\"title\",\"\")} {focused}')
 "
 ```
+
+**Matching by cmdline instead of title**: Some applications (like `hermes --tui`) overwrite their window title after launch, so `w.get('title') == 'Fixed Title'` may fail. Match by cmdline instead when the title is unreliable:
+
+```bash
+for s in /tmp/kitty-ipc-*; do
+  [ -S "$s" ] || continue
+  DISPLAY=:0 kitten @ --to "unix:$s" ls | python3 -c "
+import json, sys
+for o in json.load(sys.stdin):
+    for t in o.get('tabs', []):
+        for w in t.get('windows', []):
+            cl = ' '.join(w.get('cmdline', []))
+            if 'hermes' in cl and '--tui' in cl:
+                print(f'{w[\"id\"]}')
+                sys.exit(0)
+"
+  break
+done
+```
+
+See `references/quake-tui-toggle.md` for a complete rofi-to-TUI IPC integration example.
 
 Read terminal contents from a specific kitty window:
 
@@ -221,6 +244,12 @@ DISPLAY=:0 kitten @ --to "unix:$SOCK" launch --type=tab bash
 DISPLAY=:0 kitten @ --to "unix:$SOCK" send-text --match id:1 'echo hello'
 ```
 
+**With Enter (for TUI apps):** `send-text` doesn't press Enter. Send text + newline in a single call using bash ANSI-C quoting:
+```bash
+DISPLAY=:0 kitten @ --to "unix:$SOCK" send-text --match id:1 "${text}"$'\n'
+```
+The `$'\n'` embeds a literal newline byte that the TUI interprets as submit. Sending `Enter` as a separate call sends the literal word "Enter" — it won't work.
+
 **Close a window:**
 ```bash
 DISPLAY=:0 kitten @ --to "unix:$SOCK" close-window --match id:2
@@ -299,7 +328,7 @@ DISPLAY=:0 xdotool windowactivate WINDOW_ID
 
 4. **i3-msg is JSON.** Parse it — don't grep it. The tree is nested and complex. Use the Python snippets from this skill, not `grep`.
 
-5. **kitten @ send-text doesn't press Enter.** You must send the Enter key separately. `kitten @ send-text --match id:1 'echo hello'` sends the text but doesn't execute it. Add a separate Enter: the text + `\n` in the same call won't work reliably.
+5. **`kitten @ send-text` vs `send-key`.** `send-text` sends literal text to the terminal — use it to type the text. To press the Enter key, use a separate `send-key` call: `send-key --match id:1 Enter`. Python escape sequences like `\r` insert raw control characters into the text stream, which isn't the same as a physical keypress. Two-step pattern: `send-text --match id:1 "${text}"; send-key --match id:1 Enter`.
 
 6. **maim needs a compositor for transparency.** Without picom running, transparent windows are captured as opaque. Start picom before screenshots if you want the blur effects.
 
@@ -309,7 +338,29 @@ DISPLAY=:0 xdotool windowactivate WINDOW_ID
 
 9. **Picom can crash silently.** If transparency stops working, check `ps aux | grep picom`. Restart with `DISPLAY=:0 picom --config ~/.config/picom/picom.conf &`.
 
-10. **i3-msg returns success/failure as JSON.** Always check: `[{"success":true}]` means it worked. `[{"success":false}]` means the command was invalid or the target didn't exist.
+11. **i3-msg returns success/failure as JSON.** Always check: `[{"success":true}]` means it worked. `[{"success":false}]` means the command was invalid or the target didn't exist.
+
+12. **Scratchpad visibility: check the workspace path, not `scratchpad_state`.** The leaf window node always has `scratchpad_state='none'` even when hidden under `__i3_scratch`. The actual hidden indicator is on the parent `floating_con` node. Reliable detection: walk the tree and check if the window's ancestor chain contains a workspace named `__i3_scratch`:
+
+    ```python
+    def find_visible(node, path_contains_scratch=False):
+        if node.get('type') == 'workspace' and node.get('name') == '__i3_scratch':
+            path_contains_scratch = True
+        w = node.get('window_properties', {}).get('class', '') or ''
+        if w == 'your-class-here':
+            return not path_contains_scratch
+        for c in node.get('nodes', []) + node.get('floating_nodes', []):
+            if find_visible(c, path_contains_scratch):
+                return True
+        return False
+    ```
+
+13. **i3 keybindings (`bindsym exec`) use a minimal PATH.** i3 inherits the display-manager or startx environment, not the user's interactive shell. `~/.local/bin` is NOT included by default. When a script launched from an i3 keybinding calls a tool installed via pip/pipx, prepend to PATH inside the script:
+    ```bash
+    export PATH="$HOME/.local/bin:$PATH"
+    ```
+
+14. **`for_window` rules only fire on window creation (map event).** They do NOT re-trigger when a window is moved or shown via `i3-msg`. This means you can safely toggle a window in/out of scratchpad with `i3-msg` even if a `for_window` rule exists for that class.
 
 ---
 

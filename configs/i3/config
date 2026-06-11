@@ -18,7 +18,6 @@ bindsym $mod+q kill
 bindsym $mod+d exec --no-startup-id rofi -show drun -show-icons
 bindsym $mod+Tab exec --no-startup-id rofi -show window -show-icons
 bindsym $mod+Shift+d exec --no-startup-id rofi -show run
-bindsym $mod+a exec --no-startup-id ~/.config/i3/rofi-agent.sh
 bindsym $mod+Shift+r restart
 bindsym $mod+Shift+e exec --no-startup-id i3-nagbar -t warning -m 'Exit i3?' -B 'Yes' 'i3-msg exit'
 
@@ -143,8 +142,6 @@ exec --no-startup-id kitty \
 for_window [class="shi-tui"] \
   floating enable, \
   move scratchpad, \
-  resize set 1400 800, \
-  move position center, \
   border pixel 2
 
 bindsym $mod+grave exec --no-startup-id ~/.config/i3/shi-toggle.sh
