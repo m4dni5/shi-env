@@ -132,22 +132,22 @@ exec_always --no-startup-id picom --config ~/.config/picom/picom.conf &
 exec_always --no-startup-id feh --bg-fill ~/wallpapers/vestige-dark.png
 exec --no-startup-id kitty &
 
-# Agent TUI — Quake dropdown (scratchpad, $mod+grave to toggle)
+# Agent TUI — Quake dropdown ($mod+grave to toggle)
 exec --no-startup-id kitty \
-  --class hermes-tui \
-  --title Hermes \
+  --class shi-tui \
+  --title Shi \
   -o confirm_os_window_close=0 \
   -o background_opacity=0.92 \
   -e hermes --tui -c -s i3-desktop,tmux
 
-for_window [class="hermes-tui"] \
+for_window [class="shi-tui"] \
   floating enable, \
   move scratchpad, \
   resize set 1400 800, \
   move position center, \
   border pixel 2
 
-bindsym $mod+grave [class="hermes-tui"] scratchpad show
+bindsym $mod+grave exec --no-startup-id ~/.config/i3/shi-toggle.sh
 
 # Screenshots (maim)
 bindsym Print exec --no-startup-id maim ~/Screenshots/shot-$(date +%Y%m%d-%H%M%S).png

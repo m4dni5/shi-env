@@ -22,7 +22,7 @@ import json, sys
 for o in json.load(sys.stdin):
     for t in o.get('tabs', []):
         for w in t.get('windows', []):
-            if w.get('title', '') == 'Hermes':
+            if w.get('title', '') == 'Shi':
                 print(w['id'])
                 sys.exit(0)
 " 2>/dev/null) || true
@@ -34,7 +34,7 @@ for o in json.load(sys.stdin):
     DISPLAY=:0 kitten @ --to "unix:$SOCK" \
       send-text --match id:"$WIN_ID" Enter
     # Show the TUI if it's hidden in scratchpad
-    DISPLAY=:0 i3-msg '[title="Hermes"] scratchpad show; focus' >/dev/null 2>&1
+    DISPLAY=:0 i3-msg '[class="shi-tui"] scratchpad show; focus' >/dev/null 2>&1
     exit 0
   fi
 fi

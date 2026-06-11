@@ -71,6 +71,11 @@ if [ -f "$SCRIPT_DIR/configs/i3/rofi-agent.sh" ]; then
   chmod +x "$HOME/.config/i3/rofi-agent.sh"
   log "Installed rofi-agent.sh"
 fi
+if [ -f "$SCRIPT_DIR/configs/i3/shi-toggle.sh" ]; then
+  cp "$SCRIPT_DIR/configs/i3/shi-toggle.sh" "$HOME/.config/i3/shi-toggle.sh"
+  chmod +x "$HOME/.config/i3/shi-toggle.sh"
+  log "Installed shi-toggle.sh"
+fi
 log "Installed i3 config"
 
 # --- kitty: standalone config, copy as-is (backup existing) ---
