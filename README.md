@@ -13,7 +13,7 @@ A CLI-first, Vi-driven desktop environment for Debian, designed so both you and 
 - **Picom** compositor — transparency, blur, shadows
 - **Chromium** with CDP — browser automation from the command line
 - **Tmux** integration — terminal multiplexing with shared Vi keys
-- **Agent TUI** — Quake-style dropdown (`$mod+grave`), preloaded with skills, reluanches if killed
+- **Agent TUI** — Quake-style dropdown (`$mod+grave`), preloaded with skills, relaunches if killed
 - **Everything CLI-controllable** — the agent doesn't need to fake mouse clicks
 
 ## What You Need
@@ -144,16 +144,15 @@ The install script handles everything:
 
 If you're running Hermes Agent, Shi gives you one surface:
 
-**Quake TUI dropdown** (`$mod+grave`) — A floating kitty window running `hermes --tui -c -s i3-desktop,tmux` (class `shi-tui`). Starts on login, parked in the scratchpad. Press `$mod+grave` to summon, same key to dismiss. If the window was killed, the toggle script relaunches it automatically. The `-c` flag continues your last session, so the conversation persists across toggles. Skills `i3-desktop` and `tmux` are preloaded so the agent knows how to drive the desktop. The toggle script (`shi-toggle.sh`) handles three states:
+**Quake TUI dropdown** (`$mod+grave`) — A floating kitty window running `hermes --tui -c -s i3-desktop,tmux` (class `shi-tui`). Starts on login, parked in the scratchpad. Press `$mod+grave` to summon, same key to dismiss. If the window was killed, the toggle script relaunches it automatically. The `-c` flag continues your last session, so the conversation persists. Skills `i3-desktop` and `tmux` are preloaded so the agent knows how to drive the desktop. The toggle script (`shi-toggle.sh`) handles three states:
 - **Window visible** → hides it in the scratchpad
 - **Window hidden in scratchpad** → shows it, resized to 1400×800 and positioned center-top
-- **Window not running** → launches kitty and positions it
+- **Window not running** → launches kitty with Hermes TUI and positions it
 
 Wire up X11 access and browser control:
 
 ```bash
 # Let agent tools access X11
-echo 'export DISPLAY=:0' >> ~/.bashrc
 xhost +local:
 
 # Set browser CDP in Hermes config
@@ -311,18 +310,6 @@ Rofi replaces dmenu with a full GUI launcher. Three modes, all accessible via i3
 **Theme:** Mountain Twilight palette — matches i3 and kitty. Amber gold selection highlight on deep navy background. 600px fixed width, 10 visible results, Papirus icon theme.
 
 **Why rofi over dmenu:** Fuzzy search, icon support, Vi-style navigation (arrow keys or type to filter), window switching mode, and full theming. The `$mod+d` → `$mod+Tab` → `$mod+Shift+d` triad covers app launching, window switching, and raw command execution without leaving the keyboard.
-
-**CLI usage (agent):**
-```bash
-# Launch an app
-DISPLAY=:0 rofi -show drun -show-icons
-
-# Switch to a window by name
-DISPLAY=:0 rofi -show window -filter "kitty"
-
-# Run a raw command
-DISPLAY=:0 rofi -show run
-```
 
 ### Tmux — Terminal Multiplexer
 
