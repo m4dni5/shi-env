@@ -2,10 +2,9 @@
 # Shi (勢) — Install script
 # Installs desktop configs for the Shi environment on Debian.
 #
-# WARNING: This script will overwrite ~/.vimrc and ~/.tmux.conf (backups are
-# created automatically). It appends to ~/.bashrc idempotently (only if the
-# SHI block is not already present). Standalone configs (i3, kitty, picom,
-# i3status) are copied to ~/.config/.
+# WARNING: This script will overwrite configs for i3, kitty, picom, i3status,
+# vim, and tmux (backups are created automatically for all of them). It appends
+# to ~/.bashrc idempotently (only if the SHI block is not already present).
 #
 # Back up your existing configs first if you care about them.
 #
@@ -16,9 +15,10 @@
 # Uninstall:
 #   To remove SHI additions from bash/vim/tmux, delete the block between
 #   "# --- SHI BEGIN ---" and "# --- SHI END ---" in each file.
+#   For vim, the markers use " (Vim comment) instead of #.
 #   For vim/tmux, restore from the .bak files created during install.
-#   For i3/kitty/picom/i3status, restore your previous configs from
-#   ~/.config/*/bak.* backups or reinstall the packages' defaults.
+#   For i3/kitty/picom/i3status, restore from ~/.config/*/config.bak backups
+#   or reinstall the packages' defaults.
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -59,23 +59,39 @@ if [ ${#MISSING[@]} -gt 0 ]; then
   echo ""
 fi
 
-# --- i3: standalone config, copy as-is ---
+# --- i3: standalone config, copy as-is (backup existing) ---
 mkdir -p "$HOME/.config/i3"
+if [ -f "$HOME/.config/i3/config" ]; then
+  cp "$HOME/.config/i3/config" "$HOME/.config/i3/config.bak"
+  log "Backed up existing i3 config to ~/.config/i3/config.bak"
+fi
 cp "$SCRIPT_DIR/configs/i3/config" "$HOME/.config/i3/config"
 log "Installed i3 config"
 
-# --- kitty: standalone config, copy as-is ---
+# --- kitty: standalone config, copy as-is (backup existing) ---
 mkdir -p "$HOME/.config/kitty"
+if [ -f "$HOME/.config/kitty/kitty.conf" ]; then
+  cp "$HOME/.config/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf.bak"
+  log "Backed up existing kitty config to ~/.config/kitty/kitty.conf.bak"
+fi
 cp "$SCRIPT_DIR/configs/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
 log "Installed kitty config"
 
-# --- picom: standalone config, copy as-is ---
+# --- picom: standalone config, copy as-is (backup existing) ---
 mkdir -p "$HOME/.config/picom"
+if [ -f "$HOME/.config/picom/picom.conf" ]; then
+  cp "$HOME/.config/picom/picom.conf" "$HOME/.config/picom/picom.conf.bak"
+  log "Backed up existing picom config to ~/.config/picom/picom.conf.bak"
+fi
 cp "$SCRIPT_DIR/configs/picom/picom.conf" "$HOME/.config/picom/picom.conf"
 log "Installed picom config"
 
-# --- i3status: standalone config, copy as-is ---
+# --- i3status: standalone config, copy as-is (backup existing) ---
 mkdir -p "$HOME/.config/i3status"
+if [ -f "$HOME/.config/i3status/config" ]; then
+  cp "$HOME/.config/i3status/config" "$HOME/.config/i3status/config.bak"
+  log "Backed up existing i3status config to ~/.config/i3status/config.bak"
+fi
 cp "$SCRIPT_DIR/configs/i3status/config" "$HOME/.config/i3status/config"
 log "Installed i3status config"
 
@@ -142,7 +158,10 @@ echo "  tmux config:      ~/.tmux.conf"
 echo "  wallpaper:        ~/wallpapers/vestige-dark.png"
 echo "  bash additions:   appended to ~/.bashrc"
 echo ""
-echo "  Backups:          ~/.vimrc.bak, ~/.tmux.conf.bak"
+echo "  Backups:"
+echo "    Standalone:  ~/.config/i3/config.bak, ~/.config/kitty/kitty.conf.bak,"
+echo "                 ~/.config/picom/picom.conf.bak, ~/.config/i3status/config.bak"
+echo "    Additive:    ~/.vimrc.bak, ~/.tmux.conf.bak"
 echo ""
 echo "  Next steps:"
 echo "    1. Start i3 (or log out and back in with i3 as your session)"
@@ -150,8 +169,10 @@ echo "    2. Launch tmux and press Prefix + I to install plugins"
 echo "    3. Reload your shell: source ~/.bashrc"
 echo ""
 echo "  Uninstall:"
-echo "    Remove the block between '# --- SHI BEGIN ---' and '# --- SHI END ---'"
-echo "    in ~/.bashrc, ~/.vimrc, and ~/.tmux.conf."
+echo "    Remove the SHI marker block in ~/.bashrc (markers: # --- SHI BEGIN/END ---)"
+echo "    Remove the SHI marker block in ~/.tmux.conf (markers: # --- SHI BEGIN/END ---)"
+echo "    Remove the SHI marker block in ~/.vimrc (markers: \" --- SHI BEGIN/END ---)"
 echo "    Restore backups: cp ~/.vimrc.bak ~/.vimrc && cp ~/.tmux.conf.bak ~/.tmux.conf"
+echo "    Standalone configs: cp ~/.config/i3/config.bak ~/.config/i3/config (etc.)"
 echo ""
 log "Done."

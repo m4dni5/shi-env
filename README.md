@@ -128,14 +128,15 @@ cd shi-env
 
 The install script handles everything:
 
-- **Standalone configs** (i3, kitty, picom, i3status) are copied to `~/.config/` — these are full configs that replace the defaults.
-- **Additive configs** (bash, vim, tmux) contain only the shi-specific additions, wrapped in `# --- SHI BEGIN ---` / `# --- SHI END ---` markers.
+- **Standalone configs** (i3, kitty, picom, i3status) are copied to `~/.config/` — these are full configs that replace the defaults. Existing configs are backed up to `.bak` before overwriting.
+- **Additive configs** (bash, vim, tmux) contain only the shi-specific additions, wrapped in marker comments.
   - **Bash**: additions are appended to your existing `~/.bashrc` (idempotent — skips if already present).
-  - **Vim/Tmux**: existing files are backed up to `.bak` before the shi config is installed.
+  - **Vim**: uses `" --- SHI BEGIN ---` / `" --- SHI END ---` markers (`"` is Vim's comment character). Existing file is backed up to `.bak`.
+  - **Tmux**: uses `# --- SHI BEGIN ---` / `# --- SHI END ---` markers. Existing file is backed up to `.bak`.
 
 **⚠️ Back up your existing configs first** if you have customizations you want to keep. The script creates `.bak` copies, but a manual backup is safer.
 
-**Uninstall:** Remove the block between `# --- SHI BEGIN ---` and `# --- SHI END ---` in `~/.bashrc`, `~/.vimrc`, and `~/.tmux.conf`. Restore from the `.bak` files if needed.
+**Uninstall:** For bash and tmux, remove the block between `# --- SHI BEGIN ---` and `# --- SHI END ---`. For vim, remove the block between `" --- SHI BEGIN ---` and `" --- SHI END ---`. Restore from the `.bak` files if needed. For standalone configs (i3, kitty, picom, i3status), restore from `~/.config/*/config.bak` or `~/.config/kitty/kitty.conf.bak`.
 
 ### 4. Agent Integration (Hermes)
 

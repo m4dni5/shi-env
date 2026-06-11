@@ -1,4 +1,4 @@
-# --- SHI BEGIN ---
+" --- SHI BEGIN ---
 set nocompatible
 filetype on
 filetype indent on
@@ -6,4 +6,4 @@ syntax on
 set number
 set autoindent expandtab tabstop=4 shiftwidth=4
 set clipboard=unnamedplus
-# --- SHI END ---
+" --- SHI END ---
