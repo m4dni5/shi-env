@@ -1,0 +1,107 @@
+/* Rofi config — Mountain Twilight */
+
+configuration {
+    modi:                "drun,window,run,ssh";
+    show-icons:          true;
+    icon-theme:          "Papirus";
+    display-drun:        " Apps";
+    display-window:      " Windows";
+    display-run:         " Run";
+    display-ssh:         " SSH";
+    drun-display-format: "{name}";
+    font:                "monospace 11";
+    click-to-exit:       true;
+}
+
+/* Theme — matches i3 Mountain Twilight palette */
+* {
+    bg:       #1a1a2e;
+    fg:       #c8c8d4;
+    accent:   #c9a227;
+    urgent:   #c94427;
+    dim:      #4a4a5e;
+    bg-alt:   #14142a;
+
+    background-color:   transparent;
+    text-color:         @fg;
+    margin:     0;
+    padding:    0;
+    spacing:    0;
+}
+
+window {
+    width:              600px;
+    background-color:   @bg;
+    border:             2px;
+    border-color:       @accent;
+    border-radius:      0px;
+}
+
+inputbar {
+    padding:            12px;
+    spacing:            8px;
+    children:           [ prompt, entry ];
+    background-color:   @bg-alt;
+}
+
+prompt {
+    text-color:         @accent;
+}
+
+entry {
+    placeholder:        "Search...";
+    placeholder-color:  @dim;
+}
+
+message {
+    background-color:   @bg-alt;
+    padding:            8px;
+}
+
+listview {
+    lines:              10;
+    columns:            1;
+    fixed-height:       false;
+    background-color:   @bg;
+    padding:            4px 0;
+}
+
+element {
+    padding:            8px 16px;
+    spacing:            12px;
+}
+
+element normal.normal {
+    background-color:   @bg;
+    text-color:         @fg;
+}
+
+element normal.active {
+    background-color:   @bg;
+    text-color:         @accent;
+}
+
+element selected.normal {
+    background-color:   @accent;
+    text-color:         @bg;
+}
+
+element selected.active {
+    background-color:   @accent;
+    text-color:         @bg;
+}
+
+element urgent.normal {
+    background-color:   @urgent;
+    text-color:         @fg;
+}
+
+element-icon {
+    size:               24px;
+}
+
+element-text {
+    highlight:          bold underline;
+    text-color:         inherit;
+    background-color:   inherit;
+}

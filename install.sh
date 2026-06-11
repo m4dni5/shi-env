@@ -47,7 +47,7 @@ log "Working from: $SCRIPT_DIR"
 echo ""
 
 # --- check required packages ---
-REQUIRED_PKGS=(i3 i3status kitty picom feh maim xdotool xsel vim chromium)
+REQUIRED_PKGS=(i3 i3status kitty picom feh maim xdotool rofi xsel vim chromium)
 MISSING=()
 for pkg in "${REQUIRED_PKGS[@]}"; do
   command -v "$pkg" &>/dev/null || MISSING+=("$pkg")

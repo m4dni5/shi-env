@@ -75,7 +75,7 @@ Every tool here has a command-line interface. Every keybinding follows Vi conven
 
 ```bash
 sudo apt-get install -y \
-  i3 i3status i3lock dmenu \
+  i3 i3status i3lock rofi \
   kitty \
   picom \
   feh \
@@ -94,6 +94,7 @@ sudo apt-get install -y \
 - **xdotool** — X11 automation for non-kitty apps. Send keystrokes, move windows, simulate input.
 - **xsel** — clipboard access from the terminal. Required by tmux-yank for system clipboard integration. Also gives the agent read/write access to the clipboard via `DISPLAY=:0 xsel`.
 - **vim-gtk3** — Vim with GTK3 GUI support, which enables `+clipboard`. This lets Vim share the system clipboard via `set clipboard=unnamedplus`. Plain `vim` on Debian doesn't have clipboard support compiled in.
+- **rofi** — application launcher and window switcher. Replaces dmenu with a full GUI: app launcher with icons (`$mod+d`), window switcher (`$mod+Tab`), and command runner (`$mod+Shift+d`). Fuzzy search, Vi navigation, fully themeable. This is the single biggest quality-of-life upgrade over dmenu.
 - **chromium** — browser with Chrome DevTools Protocol (CDP) for agent automation. The agent navigates, clicks, fills forms, and reads pages programmatically.
 - **lightdm** — display manager with autologin support.
 
@@ -171,7 +172,7 @@ set $urgent   #c94427    # rust red
 set $dim      #4a4a5e    # grey
 ```
 
-Change these five values and the entire desktop rethemes — i3 bar, dmenu, window decorations.
+Change these five values and the entire desktop rethemes — i3 bar, rofi, window decorations.
 
 **Navigation (Vi-style):**
 
@@ -409,7 +410,9 @@ tmux new-session -d -s build                 # new named session
 |-----|--------|
 | `$mod+Return` | Open kitty |
 | `$mod+q` | Close window |
-| `$mod+d` | dmenu launcher |
+| `$mod+d` | rofi app launcher |
+| `$mod+Tab` | rofi window switcher |
+| `$mod+Shift+d` | rofi command runner |
 | `$mod+h/j/k/l` | Focus left/down/up/right |
 | `$mod+Shift+h/j/k/l` | Move window |
 | `$mod+1-0` | Switch workspace |
