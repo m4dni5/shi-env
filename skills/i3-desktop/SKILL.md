@@ -281,6 +281,17 @@ DISPLAY=:0 xsel --clipboard --input < file.txt          # write to clipboard
 DISPLAY=:0 echo "text" | xsel --clipboard --input       # pipe to clipboard
 ```
 
+### Browser (CDP)
+
+Chromium runs with CDP on port 9222 (launched automatically by i3 config).
+
+```bash
+curl -s http://localhost:9222/json/version    # verify CDP is running
+curl -s http://localhost:9222/json            # list open tabs
+```
+
+Or use Hermes `browser_*` tools directly.
+
 ### Wallpaper (feh)
 
 ```bash

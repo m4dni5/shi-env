@@ -16,13 +16,6 @@ A CLI-first, Vi-driven desktop environment for Debian, designed so both you and 
 - **Agent TUI** — Quake-style dropdown (`$mod+grave`), preloaded with skills, relaunches if killed
 - **Everything CLI-controllable** — the agent doesn't need to fake mouse clicks
 
-## What You Need
-
-- Debian 12+ (tested on Trixie/13)
-- A connected display
-- sudo access
-- ~30 minutes
-
 ---
 
 ## Philosophy
@@ -73,7 +66,9 @@ Every tool here has a command-line interface. Every keybinding follows Vi conven
 
 ## Installation
 
-### 1. Core Packages
+Debian 12+ (tested on Trixie/13). You need a connected display and sudo access.
+
+### Core Packages
 
 ```bash
 sudo apt-get install -y \
@@ -81,8 +76,8 @@ sudo apt-get install -y \
   kitty \
   picom \
   feh \
-  maim xdotool xsel \\
-  vim-gtk3 \\
+  maim xdotool xsel \
+  vim-gtk3 \
   chromium lightdm
 ```
 
@@ -100,16 +95,14 @@ sudo apt-get install -y \
 - **chromium** — browser with Chrome DevTools Protocol (CDP) for agent automation. The agent navigates, clicks, fills forms, and reads pages programmatically.
 - **lightdm** — display manager with autologin support.
 
-### 2. Display Manager
+### Display Manager
 
 Configure LightDM for autologin into i3:
 
 ```bash
-# Add user to autologin group (required for LightDM autologin)
 sudo groupadd -r autologin
 sudo gpasswd -a $USER autologin
 
-# Configure LightDM
 sudo tee -a /etc/lightdm/lightdm.conf << 'EOF'
 
 [Seat:*]
@@ -120,7 +113,9 @@ EOF
 sudo systemctl enable lightdm
 ```
 
-### 3. Install the Configs
+Replace `yourusername` with your actual username.
+
+### Install the Configs
 
 ```bash
 git clone https://github.com/m4dni5/shi-env.git
@@ -138,24 +133,14 @@ The install script handles everything:
 
 **⚠️ Back up your existing configs first** if you have customizations you want to keep. The script creates `.bak` copies, but a manual backup is safer.
 
-**Uninstall:** For bash and tmux, remove the block between `# --- SHI BEGIN ---` and `# --- SHI END ---`. For vim, remove the block between `" --- SHI BEGIN ---` and `" --- SHI END ---`. Restore from the `.bak` files if needed. For standalone configs (i3, kitty, picom, i3status), restore from `~/.config/*/config.bak` or `~/.config/kitty/kitty.conf.bak`.
+### Agent Integration (Hermes)
 
-### 4. Agent Integration (Hermes)
-
-If you're running Hermes Agent, Shi gives you one surface:
-
-**Quake TUI dropdown** (`$mod+grave`) — A floating kitty window running `hermes --tui -c -s i3-desktop,tmux` (class `shi-tui`). Starts on login, parked in the scratchpad. Press `$mod+grave` to summon, same key to dismiss. If the window was killed, the toggle script relaunches it automatically. The `-c` flag continues your last session, so the conversation persists. Skills `i3-desktop` and `tmux` are preloaded so the agent knows how to drive the desktop. The toggle script (`shi-toggle.sh`) handles three states:
-- **Window visible** → hides it in the scratchpad
-- **Window hidden in scratchpad** → shows it, resized to 1400×800 and positioned center-top
-- **Window not running** → launches kitty with Hermes TUI and positions it
+If you're running Hermes Agent, Shi gives you a Quake-style TUI dropdown (`$mod+grave`) — a floating kitty window running `hermes --tui -c -s i3-desktop,tmux` (class `shi-tui`). Starts on login, parked in the scratchpad. Press `$mod+grave` to summon, same key to dismiss. If the window was killed, the toggle script relaunches it automatically. The `-c` flag continues your last session, so the conversation persists. Skills `i3-desktop` and `tmux` are preloaded so the agent knows how to drive the desktop.
 
 Wire up X11 access and browser control:
 
 ```bash
-# Let agent tools access X11
 xhost +local:
-
-# Set browser CDP in Hermes config
 hermes config set browser.cdp_url "http://localhost:9222"
 ```
 
@@ -183,66 +168,11 @@ set $dim      #4a4a5e    # grey
 
 Change these five values and the entire desktop rethemes — i3 bar, rofi, window decorations.
 
-**Navigation (Vi-style):**
-
-| Key | Action |
-|-----|--------|
-| `$mod+h/j/k/l` | Focus left/down/up/right |
-| `$mod+Shift+h/j/k/l` | Move window |
-| `$mod+1-0` | Switch workspace |
-| `$mod+Shift+1-0` | Move window to workspace |
-
-**Layout:**
-
-| Key | Action |
-|-----|--------|
-| `$mod+v` | Split horizontal |
-| `$mod+Shift+v` | Split vertical |
-| `$mod+b` | Stacking layout |
-| `$mod+w` | Tabbed layout |
-| `$mod+e` | Toggle split |
-| `$mod+f` | Fullscreen |
-
-**Floating:**
-
-| Key | Action |
-|-----|--------|
-| `$mod+Shift+Space` | Toggle float |
-| `$mod+Space` | Focus toggle (tiled ↔ floating) |
-| `$mod+left-drag` | Move floating window |
-| `$mod+right-drag` | Resize floating window |
-
-The `floating_modifier $mod` directive enables mouse-based move/resize on floating windows. Without it, you can only resize via keyboard.
-
-**Resize mode** (`$mod+r` to enter):
-
-| Key | Action |
-|-----|--------|
-| `h/j/k/l` | 10px adjustments |
-| `Shift+h/j/k/l` | 50px jumps |
-| `Arrow keys` | 10px adjustments |
-| `Enter` / `Escape` | Exit resize mode |
-
 **Window decorations:** 2px pixel borders, no title bars. Minimal and clean.
 
 **Bar:** Top-positioned i3status with the theme colors. `i3status` feeds system metrics — disk, memory, CPU, load, time. Uses plain text labels instead of icon fonts for universal compatibility.
 
 **Autostart:** Picom (compositor), feh (wallpaper), kitty (terminal), and Chromium (browser with CDP) all launch automatically on login.
-
-**Screenshots:**
-
-| Key | Action |
-|-----|--------|
-| `Print` | Full screen screenshot → `~/Screenshots/` |
-| `$mod+Print` | Selection mode (drag to capture region) |
-
-**Agent surfaces:**
-
-| Key | Surface | What happens |
-|-----|---------|-------------|
-| `$mod+grave` | Quake TUI | Toggles Shi TUI: shows from scratchpad (1400×800, center-top), hides, or relaunches if killed. `hermes --tui -c -s i3-desktop,tmux` — continues last session, preloads desktop skills. |
-
-The TUI starts on login (kitty with class `shi-tui`, parked in scratchpad). 1400×800, positioned center-top (calculated from output dimensions), 92% opacity — visually distinct from regular terminals. `confirm_os_window_close=0` prevents kitty's exit confirmation dialog. The toggle script (`shi-toggle.sh`) checks if the window is visible, in the scratchpad, or gone — and acts accordingly. Visibility is determined by walking the i3 tree to check if the window is under the `__i3_scratch` workspace (the leaf node's `scratchpad_state` is unreliable).
 
 ### Kitty — Terminal
 
@@ -261,19 +191,6 @@ The socket gets a PID suffix at runtime (`/tmp/kitty-ipc-{PID}`). Discover it wi
 
 ```bash
 ls -t /tmp/kitty-ipc-* | head -1
-```
-
-**Agent commands:**
-
-```bash
-SOCK=$(ls -t /tmp/kitty-ipc-* | head -1)
-
-kitten @ --to unix:$SOCK ls                            # list windows/tabs
-kitten @ --to unix:$SOCK send-text --match id:1 'cmd'  # type into window
-kitten @ --to unix:$SOCK launch --type=window htop      # open new window
-kitten @ --to unix:$SOCK get-text --match id:1          # read terminal contents
-kitten @ --to unix:$SOCK close-window --match id:2      # close window
-kitten @ --to unix:$SOCK focus-window --match id:1      # switch focus
 ```
 
 **Theme:** Mountain Twilight — deep navy backgrounds (`#1a1a2e`), muted silver text, amber gold accents. Kitty runs at full opacity; picom handles all transparency (focused at 90%, unfocused at 80%) with blur behind.
@@ -299,41 +216,17 @@ Picom adds the visual layer: transparency, blur, shadows, fading. Picom is the s
 
 **File:** `configs/rofi/config.rasi`
 
-Rofi replaces dmenu with a full GUI launcher. Three modes, all accessible via i3 keybindings:
-
-| Key | Mode | What it does |
-|-----|------|-------------|
-| `$mod+d` | `drun` | App launcher with icons and descriptions |
-| `$mod+Tab` | `window` | Switch between open windows |
-| `$mod+Shift+d` | `run` | Raw command runner (like dmenu) |
+Rofi replaces dmenu with a full GUI launcher: app launcher with icons, window switcher, and command runner. Fuzzy search, Vi navigation, fully themeable.
 
 **Theme:** Mountain Twilight palette — matches i3 and kitty. Amber gold selection highlight on deep navy background. 600px fixed width, 10 visible results, Papirus icon theme.
-
-**Why rofi over dmenu:** Fuzzy search, icon support, Vi-style navigation (arrow keys or type to filter), window switching mode, and full theming. The `$mod+d` → `$mod+Tab` → `$mod+Shift+d` triad covers app launching, window switching, and raw command execution without leaving the keyboard.
 
 ### Tmux — Terminal Multiplexer
 
 **File:** `configs/tmux/tmux.conf`
 
-Tmux and i3 serve different purposes but use the same navigation keys. This is intentional — muscle memory transfers.
+Tmux and i3 serve different purposes but use the same navigation keys — muscle memory transfers. i3 manages windows across the desktop; tmux manages terminal sessions within a single window.
 
-**i3 manages windows across the desktop.** Tmux manages terminal sessions within a single window.
-
-**Navigation — same keys as i3, no prefix needed:**
-
-| Key | Action |
-|-----|--------|
-| `Alt+h/j/k/l` | Switch panes |
-| `Ctrl+b %` | Split horizontal |
-| `Ctrl+b "` | Split vertical |
-| `Ctrl+b c` | New window |
-| `Ctrl+b n/p` | Next/prev window |
-| `Ctrl+b [` | Copy mode (Vi-style) |
-| `Ctrl+b z` | Zoom pane (fullscreen toggle) |
-
-**Vi mode:** `set-window-option -g mode-keys vi` — enables Vi-style copy mode. `Space` starts selection, `h/j/k/l` navigates, `Enter` copies.
-
-**Mouse:** Enabled for pane resizing and scrollback. The agent uses tmux's `send-keys` and `capture-pane` for programmatic access.
+**Vi mode** and **mouse** are enabled. The agent uses tmux's `send-keys` and `capture-pane` for programmatic access.
 
 **Plugins (via TPM):**
 - `tmux-yank` — sync clipboard with system
@@ -375,66 +268,6 @@ set -o vi
 
 ---
 
-## Agent Control Reference
-
-Quick reference for everything the agent can do.
-
-### i3 Window Manager
-
-```bash
-DISPLAY=:0 i3-msg reload                     # reload config
-DISPLAY=:0 i3-msg 'workspace 2'              # switch workspace
-DISPLAY=:0 i3-msg '[class="kitty"] kill'     # close all kitty windows
-DISPLAY=:0 i3-msg -t get_tree                # full window tree (JSON)
-DISPLAY=:0 i3-msg -t get_outputs             # monitor info
-```
-
-### Kitty Terminal
-
-```bash
-SOCK=$(ls -t /tmp/kitty-ipc-* | head -1)
-kitten @ --to unix:$SOCK ls                  # list all windows
-kitten @ --to unix:$SOCK send-text --match id:1 'echo hello\n'
-kitten @ --to unix:$SOCK get-text --match id:1
-kitten @ --to unix:$SOCK launch --type=window htop
-kitten @ --to unix:$SOCK close-window --match id:2
-```
-
-### Browser (CDP)
-
-```bash
-curl -s http://localhost:9222/json/version    # verify CDP is running
-curl -s http://localhost:9222/json            # list open tabs
-# Or use Hermes browser_* tools directly
-```
-
-### Clipboard
-
-```bash
-DISPLAY=:0 xsel --clipboard --output          # read clipboard
-DISPLAY=:0 xsel --clipboard --input < file.txt # write to clipboard
-DISPLAY=:0 echo "text" | xsel --clipboard      # pipe to clipboard
-```
-
-### Screenshots
-
-```bash
-DISPLAY=:0 maim ~/shot.png                   # full screen
-DISPLAY=:0 maim -s ~/shot.png                # selection (drag to capture)
-DISPLAY=:0 maim -i WINDOW_ID ~/shot.png      # specific window
-```
-
-### Tmux
-
-```bash
-tmux list-panes -a                           # list all panes
-tmux capture-pane -p -J -t %0 -S -100       # capture pane output
-tmux send-keys -t %0 'command' Enter        # send command to pane
-tmux new-session -d -s build                 # new named session
-```
-
----
-
 ## Keyboard Reference Card
 
 ### Global (i3)
@@ -446,23 +279,37 @@ tmux new-session -d -s build                 # new named session
 | `$mod+d` | rofi app launcher |
 | `$mod+Tab` | rofi window switcher |
 | `$mod+Shift+d` | rofi command runner |
-| `$mod+grave` | Agent TUI toggle (Quake, auto-relaunch) |
+| `$mod+grave` | Agent TUI toggle |
 | `$mod+h/j/k/l` | Focus left/down/up/right |
 | `$mod+Shift+h/j/k/l` | Move window |
 | `$mod+1-0` | Switch workspace |
 | `$mod+Shift+1-0` | Move to workspace |
 | `$mod+v` | Split horizontal |
 | `$mod+Shift+v` | Split vertical |
+| `$mod+b` | Stacking layout |
+| `$mod+w` | Tabbed layout |
+| `$mod+e` | Toggle split |
 | `$mod+f` | Fullscreen |
 | `$mod+Shift+Space` | Toggle float |
-| `$mod+Space` | Focus toggle |
+| `$mod+Space` | Focus toggle (tiled ↔ floating) |
+| `$mod+left-drag` | Move floating window |
+| `$mod+right-drag` | Resize floating window |
 | `$mod+r` | Enter resize mode |
 | `$mod+Shift+r` | Reload config |
 | `$mod+Shift+e` | Exit i3 |
 | `Print` | Screenshot |
 | `$mod+Print` | Screenshot selection |
 
-### Inside Terminal (Tmux)
+### Resize Mode (i3, `$mod+r` to enter)
+
+| Key | Action |
+|-----|--------|
+| `h/j/k/l` | 10px adjustment |
+| `Shift+h/j/k/l` | 50px jump |
+| `Arrow keys` | 10px adjustment |
+| `Enter` / `Escape` | Exit mode |
+
+### Tmux
 
 | Key | Action |
 |-----|--------|
@@ -473,15 +320,6 @@ tmux new-session -d -s build                 # new named session
 | `Ctrl+b n/p` | Next/prev window |
 | `Ctrl+b [` | Copy mode (Vi) |
 | `Ctrl+b z` | Zoom pane |
-
-### Resize Mode (i3)
-
-| Key | Action |
-|-----|--------|
-| `h/j/k/l` | 10px adjustment |
-| `Shift+h/j/k/l` | 50px jump |
-| `Arrow keys` | 10px adjustment |
-| `Enter` / `Escape` | Exit mode |
 
 ---
 
