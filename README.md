@@ -13,6 +13,8 @@ A CLI-first, Vi-driven desktop environment for Debian, designed so both you and 
 - **Picom** compositor — transparency, blur, shadows
 - **Chromium** with CDP — browser automation from the command line
 - **Tmux** integration — terminal multiplexing with shared Vi keys
+- **Agent TUI** — Quake-style dropdown (`$mod+grave`) with Hermes preloaded
+- **Rofi agent prompt** — one-shot questions via `$mod+a`, routes to TUI or fallback
 - **Everything CLI-controllable** — the agent doesn't need to fake mouse clicks
 
 ## What You Need
@@ -63,6 +65,8 @@ Every tool here has a command-line interface. Every keybinding follows Vi conven
 |-------|----------|--------------|
 | Window manager | `i3-msg` | `DISPLAY=:0 i3-msg` |
 | Terminal | `kitten @` | Via Unix socket |
+| Agent TUI | `$mod+grave` | Quake dropdown, kitty IPC |
+| Agent prompt | `$mod+a` | Rofi → kitty IPC or `hermes chat -q` |
 | Browser | CDP (port 9222) | `browser_*` tools |
 | Screenshots | `maim` | `DISPLAY=:0 maim` |
 | Keyboard/mouse | `xdotool` | `DISPLAY=:0 xdotool` |
@@ -140,7 +144,13 @@ The install script handles everything:
 
 ### 4. Agent Integration (Hermes)
 
-If you're running Hermes Agent, wire up X11 access and browser control:
+If you're running Hermes Agent, Shi gives you two surfaces:
+
+**Quake TUI dropdown** (`$mod+grave`) — A floating kitty window running `hermes --tui -c -s i3-desktop,tmux`. Starts on login, parked in the scratchpad. Press `$mod+grave` to summon, same key to dismiss. The `-c` flag continues your last session, so the conversation persists across toggles. Skills `i3-desktop` and `tmux` are preloaded so the agent knows how to drive the desktop.
+
+**Rofi one-shot** (`$mod+a`) — Type a question in rofi. If the TUI is running, the prompt is sent directly into it (kitty IPC) and the TUI is summoned. If the TUI isn't running, falls back to `hermes chat -q` and displays the response in rofi.
+
+Wire up X11 access and browser control:
 
 ```bash
 # Let agent tools access X11
@@ -227,6 +237,19 @@ The `floating_modifier $mod` directive enables mouse-based move/resize on floati
 |-----|--------|
 | `Print` | Full screen screenshot → `~/Screenshots/` |
 | `$mod+Print` | Selection mode (drag to capture region) |
+
+**Agent surfaces:**
+
+| Key | Surface | What happens |
+|-----|---------|-------------|
+| `$mod+grave` | Quake TUI | Toggles Hermes TUI from scratchpad. `hermes --tui -c -s i3-desktop,tmux` — continues last session, preloads desktop skills. |
+| `$mod+a` | Rofi one-shot | Prompt in rofi. If TUI is running, sends prompt into it via kitty IPC and summons the window. Otherwise falls back to `hermes chat -q`. |
+
+The TUI starts on login (kitty with class `hermes-tui`, parked in scratchpad). 1400×800, centered, 92% opacity — visually distinct from regular terminals. `confirm_os_window_close=0` prevents kitty's exit confirmation dialog.
+
+**File:** `configs/i3/rofi-agent.sh`
+
+The rofi one-shot script checks for a running kitty IPC socket, looks for a window titled "Hermes", and if found, sends the prompt text directly into it. If the TUI isn't running, it falls back to `hermes chat -q` and displays the response in a read-only rofi window.
 
 ### Kitty — Terminal
 
@@ -442,6 +465,8 @@ tmux new-session -d -s build                 # new named session
 | `$mod+d` | rofi app launcher |
 | `$mod+Tab` | rofi window switcher |
 | `$mod+Shift+d` | rofi command runner |
+| `$mod+a` | Ask agent (rofi one-shot) |
+| `$mod+grave` | Agent TUI toggle (Quake dropdown) |
 | `$mod+h/j/k/l` | Focus left/down/up/right |
 | `$mod+Shift+h/j/k/l` | Move window |
 | `$mod+1-0` | Switch workspace |

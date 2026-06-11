@@ -18,6 +18,7 @@ bindsym $mod+q kill
 bindsym $mod+d exec --no-startup-id rofi -show drun -show-icons
 bindsym $mod+Tab exec --no-startup-id rofi -show window -show-icons
 bindsym $mod+Shift+d exec --no-startup-id rofi -show run
+bindsym $mod+a exec --no-startup-id ~/.config/i3/rofi-agent.sh
 bindsym $mod+Shift+r restart
 bindsym $mod+Shift+e exec --no-startup-id i3-nagbar -t warning -m 'Exit i3?' -B 'Yes' 'i3-msg exit'
 
@@ -130,6 +131,23 @@ bar {
 exec_always --no-startup-id picom --config ~/.config/picom/picom.conf &
 exec_always --no-startup-id feh --bg-fill ~/wallpapers/vestige-dark.png
 exec --no-startup-id kitty &
+
+# Agent TUI — Quake dropdown (scratchpad, $mod+grave to toggle)
+exec --no-startup-id kitty \
+  --class hermes-tui \
+  --title Hermes \
+  -o confirm_os_window_close=0 \
+  -o background_opacity=0.92 \
+  -e hermes --tui -c -s i3-desktop,tmux
+
+for_window [class="hermes-tui"] \
+  floating enable, \
+  move scratchpad, \
+  resize set 1400 800, \
+  move position center, \
+  border pixel 2
+
+bindsym $mod+grave [class="hermes-tui"] scratchpad show
 
 # Screenshots (maim)
 bindsym Print exec --no-startup-id maim ~/Screenshots/shot-$(date +%Y%m%d-%H%M%S).png

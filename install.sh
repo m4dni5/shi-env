@@ -66,6 +66,11 @@ if [ -f "$HOME/.config/i3/config" ]; then
   log "Backed up existing i3 config to ~/.config/i3/config.bak"
 fi
 cp "$SCRIPT_DIR/configs/i3/config" "$HOME/.config/i3/config"
+if [ -f "$SCRIPT_DIR/configs/i3/rofi-agent.sh" ]; then
+  cp "$SCRIPT_DIR/configs/i3/rofi-agent.sh" "$HOME/.config/i3/rofi-agent.sh"
+  chmod +x "$HOME/.config/i3/rofi-agent.sh"
+  log "Installed rofi-agent.sh"
+fi
 log "Installed i3 config"
 
 # --- kitty: standalone config, copy as-is (backup existing) ---
