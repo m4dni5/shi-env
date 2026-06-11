@@ -2,6 +2,10 @@
 # Shi (勢) — Install script
 # Installs desktop configs for the Shi environment on Debian.
 #
+# Idempotent: safe to run multiple times. Backups are only created when the
+# existing config differs from what would be installed. Configs are only
+# overwritten when the source has changed.
+#
 # WARNING: This script will overwrite configs for i3, kitty, picom, i3status,
 # vim, and tmux (backups are created automatically for all of them). It appends
 # to ~/.bashrc idempotently (only if the SHI block is not already present).
@@ -34,6 +38,25 @@ append_block_once(){ # append_block_once <file> <marker> < content from stdin
   log "Added block to $file"
 }
 
+backup_if_differs(){ # backup_if_differs <source> <dest>
+  local src="$1" dst="$2"
+  [ -f "$dst" ] || return 0
+  diff -q "$src" "$dst" >/dev/null 2>&1 && return 0
+  cp "$dst" "${dst}.bak"
+  log "Backed up $dst (differs from source)"
+}
+
+install_if_changed(){ # install_if_changed <source> <dest>
+  local src="$1" dst="$2"
+  if [ -f "$dst" ] && diff -q "$src" "$dst" >/dev/null 2>&1; then
+    log "$(basename "$dst") unchanged, skipping"
+    return 0
+  fi
+  backup_if_differs "$src" "$dst"
+  cp "$src" "$dst"
+  log "Installed $dst"
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # --- check we're not root ---
@@ -59,78 +82,43 @@ if [ ${#MISSING[@]} -gt 0 ]; then
   echo ""
 fi
 
-# --- i3: standalone config, copy as-is (backup existing) ---
+# --- i3: standalone config ---
 mkdir -p "$HOME/.config/i3"
-if [ -f "$HOME/.config/i3/config" ]; then
-  cp "$HOME/.config/i3/config" "$HOME/.config/i3/config.bak"
-  log "Backed up existing i3 config to ~/.config/i3/config.bak"
-fi
-cp "$SCRIPT_DIR/configs/i3/config" "$HOME/.config/i3/config"
-if [ -f "$SCRIPT_DIR/configs/i3/rofi-agent.sh" ]; then
-  cp "$SCRIPT_DIR/configs/i3/rofi-agent.sh" "$HOME/.config/i3/rofi-agent.sh"
-  chmod +x "$HOME/.config/i3/rofi-agent.sh"
-  log "Installed rofi-agent.sh"
-fi
-if [ -f "$SCRIPT_DIR/configs/i3/shi-toggle.sh" ]; then
-  cp "$SCRIPT_DIR/configs/i3/shi-toggle.sh" "$HOME/.config/i3/shi-toggle.sh"
-  chmod +x "$HOME/.config/i3/shi-toggle.sh"
-  log "Installed shi-toggle.sh"
-fi
-log "Installed i3 config"
+install_if_changed "$SCRIPT_DIR/configs/i3/config" "$HOME/.config/i3/config"
+for script in rofi-agent.sh shi-toggle.sh; do
+  if [ -f "$SCRIPT_DIR/configs/i3/$script" ]; then
+    install_if_changed "$SCRIPT_DIR/configs/i3/$script" "$HOME/.config/i3/$script"
+    chmod +x "$HOME/.config/i3/$script"
+  fi
+done
 
-# --- kitty: standalone config, copy as-is (backup existing) ---
+# --- kitty: standalone config ---
 mkdir -p "$HOME/.config/kitty"
-if [ -f "$HOME/.config/kitty/kitty.conf" ]; then
-  cp "$HOME/.config/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf.bak"
-  log "Backed up existing kitty config to ~/.config/kitty/kitty.conf.bak"
-fi
-cp "$SCRIPT_DIR/configs/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
-log "Installed kitty config"
+install_if_changed "$SCRIPT_DIR/configs/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
 
-# --- picom: standalone config, copy as-is (backup existing) ---
+# --- picom: standalone config ---
 mkdir -p "$HOME/.config/picom"
-if [ -f "$HOME/.config/picom/picom.conf" ]; then
-  cp "$HOME/.config/picom/picom.conf" "$HOME/.config/picom/picom.conf.bak"
-  log "Backed up existing picom config to ~/.config/picom/picom.conf.bak"
-fi
-cp "$SCRIPT_DIR/configs/picom/picom.conf" "$HOME/.config/picom/picom.conf"
-log "Installed picom config"
+install_if_changed "$SCRIPT_DIR/configs/picom/picom.conf" "$HOME/.config/picom/picom.conf"
 
-# --- i3status: standalone config, copy as-is (backup existing) ---
+# --- i3status: standalone config ---
 mkdir -p "$HOME/.config/i3status"
-if [ -f "$HOME/.config/i3status/config" ]; then
-  cp "$HOME/.config/i3status/config" "$HOME/.config/i3status/config.bak"
-  log "Backed up existing i3status config to ~/.config/i3status/config.bak"
-fi
-cp "$SCRIPT_DIR/configs/i3status/config" "$HOME/.config/i3status/config"
-log "Installed i3status config"
+install_if_changed "$SCRIPT_DIR/configs/i3status/config" "$HOME/.config/i3status/config"
 
 # --- wallpaper ---
 mkdir -p "$HOME/wallpapers"
 if [ -f "$SCRIPT_DIR/wallpapers/vestige-dark.png" ]; then
-  cp "$SCRIPT_DIR/wallpapers/vestige-dark.png" "$HOME/wallpapers/"
-  log "Installed wallpaper"
+  install_if_changed "$SCRIPT_DIR/wallpapers/vestige-dark.png" "$HOME/wallpapers/vestige-dark.png"
 fi
 
 # --- bash: append shi block (idempotent) ---
 append_block_once "$HOME/.bashrc" "# --- SHI BEGIN ---" < "$SCRIPT_DIR/configs/bash/bashrc"
 log "Bash additions applied"
 
-# --- vim: backup existing, then copy ---
-if [ -f "$HOME/.vimrc" ]; then
-  cp "$HOME/.vimrc" "$HOME/.vimrc.bak"
-  log "Backed up existing ~/.vimrc to ~/.vimrc.bak"
-fi
-cp "$SCRIPT_DIR/configs/vim/vimrc" "$HOME/.vimrc"
-log "Installed ~/.vimrc"
+# --- vim: additive config with markers ---
+install_if_changed "$SCRIPT_DIR/configs/vim/vimrc" "$HOME/.vimrc"
 
-# --- tmux: backup existing, then copy ---
-if [ -f "$HOME/.tmux.conf" ]; then
-  cp "$HOME/.tmux.conf" "$HOME/.tmux.conf.bak"
-  log "Backed up existing ~/.tmux.conf to ~/.tmux.conf.bak"
-fi
-cp "$SCRIPT_DIR/configs/tmux/tmux.conf" "$HOME/.tmux.conf"
-log "Installed ~/.tmux.conf"
+# --- tmux: additive config with markers ---
+install_if_changed "$SCRIPT_DIR/configs/tmux/tmux.conf" "$HOME/.tmux.conf"
 
 # --- TPM bootstrap ---
 TPM_DIR="$HOME/.tmux/plugins/tpm"
@@ -148,8 +136,9 @@ if [ -d "$HOME/.hermes" ] && [ -d "$SCRIPT_DIR/skills" ]; then
   for skill_dir in "$SCRIPT_DIR/skills"/*/; do
     skill_name=$(basename "$skill_dir")
     mkdir -p "$HERMES_SKILLS_DIR/$skill_name"
-    cp "$skill_dir"/* "$HERMES_SKILLS_DIR/$skill_name/"
-    log "Installed Hermes skill: $skill_name"
+    for file in "$skill_dir"*; do
+      install_if_changed "$file" "$HERMES_SKILLS_DIR/$skill_name/$(basename "$file")"
+    done
   done
 elif [ -d "$SCRIPT_DIR/skills" ]; then
   log "Hermes not found at ~/.hermes — skills not installed (copy manually)"
@@ -167,10 +156,10 @@ echo "  vim config:       ~/.vimrc"
 echo "  tmux config:      ~/.tmux.conf"
 echo "  wallpaper:        ~/wallpapers/vestige-dark.png"
 echo "  bash additions:   appended to ~/.bashrc"
+echo "  agent scripts:    ~/.config/i3/rofi-agent.sh, ~/.config/i3/shi-toggle.sh"
 echo ""
-echo "  Backups:"
-echo "    Standalone:  ~/.config/i3/config.bak, ~/.config/kitty/kitty.conf.bak,"
-echo "                 ~/.config/picom/picom.conf.bak, ~/.config/i3status/config.bak"
+echo "  Backups (only created when configs differ):"
+echo "    Standalone:  ~/.config/*/config.bak, ~/.config/kitty/kitty.conf.bak"
 echo "    Additive:    ~/.vimrc.bak, ~/.tmux.conf.bak"
 echo ""
 echo "  Next steps:"

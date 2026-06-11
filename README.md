@@ -283,7 +283,7 @@ kitten @ --to unix:$SOCK close-window --match id:2      # close window
 kitten @ --to unix:$SOCK focus-window --match id:1      # switch focus
 ```
 
-**Theme:** Mountain Twilight — deep navy backgrounds (`#1a1a2e`), muted silver text, amber gold accents. 95% opacity with picom providing the blur behind.
+**Theme:** Mountain Twilight — deep navy backgrounds (`#1a1a2e`), muted silver text, amber gold accents. Kitty runs at full opacity; picom handles all transparency (focused at 90%, unfocused at 80%) with blur behind.
 
 **Cursor note:** kitty 0.41.1 renamed `cursor_color` to `cursor`. If you're on an older version, use `cursor_color` instead.
 
@@ -291,7 +291,7 @@ kitten @ --to unix:$SOCK focus-window --match id:1      # switch focus
 
 **File:** `configs/picom/picom.conf`
 
-Picom adds the visual layer: transparency, blur, shadows, fading. Without it, kitty's `background_opacity` setting is silently ignored.
+Picom adds the visual layer: transparency, blur, shadows, fading. Picom is the single source of truth for window opacity — kitty runs at `background_opacity 1.0` so the two layers don't compound.
 
 **Effects:**
 
@@ -529,7 +529,7 @@ sudo touch /var/run/utmpx && sudo chmod 644 /var/run/utmpx
 
 ### Kitty: Transparency not working
 
-No compositor running. Start picom — without it, `background_opacity` is silently ignored.
+No compositor running. Picom owns all window transparency — kitty's `background_opacity` is set to `1.0` (opaque) so the two layers don't compound. If you want to adjust transparency, edit picom's `opacity-rule` in `configs/picom/picom.conf`, not kitty.conf.
 
 ### i3status: Broken icons in bar
 
