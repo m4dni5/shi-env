@@ -122,7 +122,7 @@ sudo systemctl enable lightdm
 
 ```bash
 git clone https://github.com/m4dni5/shi-env.git
-cd shi
+cd shi-env
 ./install.sh
 ```
 
@@ -277,6 +277,34 @@ Picom adds the visual layer: transparency, blur, shadows, fading. Without it, ki
 - **Fading:** 0.03 step transitions — smooth but not slow.
 
 **Backend:** `glx` with vsync. If you get screen tearing, try switching to `xrender`.
+
+### Rofi — Application Launcher
+
+**File:** `configs/rofi/config.rasi`
+
+Rofi replaces dmenu with a full GUI launcher. Three modes, all accessible via i3 keybindings:
+
+| Key | Mode | What it does |
+|-----|------|-------------|
+| `$mod+d` | `drun` | App launcher with icons and descriptions |
+| `$mod+Tab` | `window` | Switch between open windows |
+| `$mod+Shift+d` | `run` | Raw command runner (like dmenu) |
+
+**Theme:** Mountain Twilight palette — matches i3 and kitty. Amber gold selection highlight on deep navy background. 600px fixed width, 10 visible results, Papirus icon theme.
+
+**Why rofi over dmenu:** Fuzzy search, icon support, Vi-style navigation (arrow keys or type to filter), window switching mode, and full theming. The `$mod+d` → `$mod+Tab` → `$mod+Shift+d` triad covers app launching, window switching, and raw command execution without leaving the keyboard.
+
+**CLI usage (agent):**
+```bash
+# Launch an app
+DISPLAY=:0 rofi -show drun -show-icons
+
+# Switch to a window by name
+DISPLAY=:0 rofi -show window -filter "kitty"
+
+# Run a raw command
+DISPLAY=:0 rofi -show run
+```
 
 ### Tmux — Terminal Multiplexer
 
