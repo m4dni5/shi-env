@@ -1,0 +1,70 @@
+/* Waybar style — Mountain Twilight
+ * Font: Hack
+ * Palette: deep navy bg, silver fg, amber accent, rust urgent, grey dim
+ */
+
+* {
+    font-family: "Hack", monospace;
+    font-size: 13px;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background-color: #1a1a2e;
+    color: #c8c8d4;
+}
+
+/* Workspaces */
+#workspaces button {
+    padding: 0 8px;
+    color: #4a4a5e;
+    background-color: transparent;
+}
+
+#workspaces button.focused {
+    color: #1a1a2e;
+    background-color: #c9a227;
+}
+
+#workspaces button.urgent {
+    color: #c8c8d4;
+    background-color: #c94427;
+}
+
+#workspaces button:hover {
+    background-color: #2a2a3e;
+}
+
+/* Mode (resize, etc.) */
+#mode {
+    color: #c9a227;
+    background-color: #14142a;
+    padding: 0 8px;
+}
+
+/* Window title */
+#window {
+    color: #4a4a5e;
+    padding: 0 8px;
+}
+
+/* Right-side modules */
+#cpu, #memory, #disk, #load, #clock {
+    padding: 0 8px;
+    color: #c8c8d4;
+}
+
+#clock {
+    color: #c9a227;
+}
+
+/* Degraded thresholds */
+#memory.degraded {
+    color: #c9a227;
+}
+
+#memory.critical {
+    color: #c94427;
+}

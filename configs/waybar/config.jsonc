@@ -1,0 +1,43 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 24,
+    "spacing": 4,
+
+    "modules-left": ["sway/workspaces", "sway/mode"],
+    "modules-center": ["sway/window"],
+    "modules-right": ["cpu", "memory", "disk", "load", "clock"],
+
+    "sway/workspaces": {
+        "disable-scroll": false,
+        "all-outputs": true,
+        "format": "{name}"
+    },
+    "sway/mode": {
+        "format": " {}"
+    },
+    "sway/window": {
+        "max-length": 50,
+        "tooltip": false
+    },
+    "cpu": {
+        "format": "CPU: {usage}%",
+        "tooltip": false
+    },
+    "memory": {
+        "format": "Mem: {used:0.1f}G / {total:0.1f}G",
+        "tooltip": false
+    },
+    "disk": {
+        "format": "Disk: {free}",
+        "path": "/"
+    },
+    "load": {
+        "format": "Load: {load1}",
+        "tooltip": false
+    },
+    "clock": {
+        "format": "{:%a %d %b %H:%M}",
+        "tooltip-format": "{:%Y-%m-%d %H:%M:%S}"
+    }
+}

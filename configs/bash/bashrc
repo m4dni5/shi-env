@@ -1,5 +1,4 @@
 # --- SHI BEGIN ---
-export DISPLAY=:0
 export EDITOR=vim
 export VISUAL=$EDITOR
 set -o vi
