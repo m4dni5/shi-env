@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Shi (勢) — Install script
-# Installs desktop configs for the Shi environment on Debian.
+# Installs desktop configs for the Shi environment on Debian (Sway/Wayland).
 #
 # Idempotent: safe to run multiple times. Backups are only created when the
 # existing config differs from what would be installed. Configs are only
 # overwritten when the source has changed.
 #
-# WARNING: This script will overwrite configs for i3, kitty, picom, i3status,
-# vim, and tmux (backups are created automatically for all of them). It appends
+# WARNING: This script will overwrite configs for sway, kitty, waybar, vim,
+# and tmux (backups are created automatically for all of them). It appends
 # to ~/.bashrc idempotently (only if the SHI block is not already present).
 #
 # Back up your existing configs first if you care about them.
@@ -21,7 +21,7 @@
 #   "# --- SHI BEGIN ---" and "# --- SHI END ---" in each file.
 #   For vim, the markers use " (Vim comment) instead of #.
 #   For vim/tmux, restore from the .bak files created during install.
-#   For i3/kitty/picom/i3status, restore from ~/.config/*/config.bak backups
+#   For sway/waybar/kitty, restore from ~/.config/*/config.bak backups
 #   or reinstall the packages' defaults.
 
 set -euo pipefail
@@ -65,30 +65,37 @@ if [ "$(id -u)" -eq 0 ]; then
   exit 1
 fi
 
-log "Shi (勢) — Desktop environment install"
+log "Shi (勢) — Desktop environment install (Sway/Wayland)"
 log "Working from: $SCRIPT_DIR"
 echo ""
 
 # --- check required packages ---
-REQUIRED_PKGS=(i3 i3status kitty picom feh maim xdotool rofi xsel vim chromium)
+# Map: package_name -> binary to check (where they differ)
+declare -A PKG_BIN=(
+  [wl-clipboard]=wl-copy
+  [vim-gtk3]=vim
+  [xdg-desktop-portal-wlr]=/usr/libexec/xdg-desktop-portal-wlr
+)
+REQUIRED_PKGS=(sway swaybg waybar grim slurp wl-clipboard ydotool rofi kitty vim-gtk3 chromium jq xdg-desktop-portal-wlr)
 MISSING=()
 for pkg in "${REQUIRED_PKGS[@]}"; do
-  command -v "$pkg" &>/dev/null || MISSING+=("$pkg")
+  bin="${PKG_BIN[$pkg]:-$pkg}"
+  command -v "$bin" &>/dev/null || MISSING+=("$pkg")
 done
 if [ ${#MISSING[@]} -gt 0 ]; then
   warn "Missing packages: ${MISSING[*]}"
   warn "Install with: sudo apt-get install -y ${MISSING[*]}"
-  warn "(Note: for vim, install vim-gtk3 for clipboard support)"
+  warn "(Note: on some distros, rofi is packaged as rofi-wayland)"
   echo ""
 fi
 
-# --- i3: standalone config ---
-mkdir -p "$HOME/.config/i3"
-install_if_changed "$SCRIPT_DIR/configs/i3/config" "$HOME/.config/i3/config"
-for script in rofi-agent.sh shi-toggle.sh; do
-  if [ -f "$SCRIPT_DIR/configs/i3/$script" ]; then
-    install_if_changed "$SCRIPT_DIR/configs/i3/$script" "$HOME/.config/i3/$script"
-    chmod +x "$HOME/.config/i3/$script"
+# --- sway: standalone config ---
+mkdir -p "$HOME/.config/sway"
+install_if_changed "$SCRIPT_DIR/configs/sway/config" "$HOME/.config/sway/config"
+for script in shi-toggle.sh sway-window-switcher.sh; do
+  if [ -f "$SCRIPT_DIR/configs/sway/$script" ]; then
+    install_if_changed "$SCRIPT_DIR/configs/sway/$script" "$HOME/.config/sway/$script"
+    chmod +x "$HOME/.config/sway/$script"
   fi
 done
 
@@ -96,13 +103,21 @@ done
 mkdir -p "$HOME/.config/kitty"
 install_if_changed "$SCRIPT_DIR/configs/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
 
-# --- picom: standalone config ---
-mkdir -p "$HOME/.config/picom"
-install_if_changed "$SCRIPT_DIR/configs/picom/picom.conf" "$HOME/.config/picom/picom.conf"
+# --- waybar: standalone config + style ---
+mkdir -p "$HOME/.config/waybar"
+install_if_changed "$SCRIPT_DIR/configs/waybar/config.jsonc" "$HOME/.config/waybar/config.jsonc"
+install_if_changed "$SCRIPT_DIR/configs/waybar/style.css" "$HOME/.config/waybar/style.css"
 
-# --- i3status: standalone config ---
-mkdir -p "$HOME/.config/i3status"
-install_if_changed "$SCRIPT_DIR/configs/i3status/config" "$HOME/.config/i3status/config"
+# --- xdg-desktop-portal config (prevents waybar SEGV with greetd) ---
+PORTALS_DIR="$HOME/.config/xdg-desktop-portal"
+PORTALS_CONF="$PORTALS_DIR/portals.conf"
+if [ ! -f "$PORTALS_CONF" ]; then
+  mkdir -p "$PORTALS_DIR"
+  printf '[preferred]\ndefault=wlr;gtk\norg.freedesktop.impl.portal.FileChooser=gtk\n' > "$PORTALS_CONF"
+  log "Installed $PORTALS_CONF"
+else
+  log "portals.conf already present, skipping"
+fi
 
 # --- wallpaper ---
 mkdir -p "$HOME/wallpapers"
@@ -110,8 +125,30 @@ if [ -f "$SCRIPT_DIR/wallpapers/vestige-dark.png" ]; then
   install_if_changed "$SCRIPT_DIR/wallpapers/vestige-dark.png" "$HOME/wallpapers/vestige-dark.png"
 fi
 
-# --- bash: append shi block (idempotent) ---
-append_block_once "$HOME/.bashrc" "# --- SHI BEGIN ---" < "$SCRIPT_DIR/configs/bash/bashrc"
+# --- bash: replace shi block if it exists, or append ---
+BASHRC="$HOME/.bashrc"
+if grep -Fq "# --- SHI BEGIN ---" "$BASHRC" 2>/dev/null; then
+  # Block exists — check if it needs updating (e.g. old DISPLAY=:0)
+  if grep -q 'DISPLAY=:0' "$BASHRC"; then
+    log "Updating bash SHI block (removing deprecated DISPLAY=:0)..."
+    # Replace the entire SHI block
+    python3 -c "
+import re, sys
+with open('$BASHRC', 'r') as f:
+    content = f.read()
+new_block = open('$SCRIPT_DIR/configs/bash/bashrc').read().strip()
+pattern = r'# --- SHI BEGIN ---.*?# --- SHI END ---'
+content = re.sub(pattern, new_block, content, flags=re.DOTALL)
+with open('$BASHRC', 'w') as f:
+    f.write(content)
+"
+    log "Bash SHI block updated"
+  else
+    log "Bash SHI block already present and up to date"
+  fi
+else
+  append_block_once "$BASHRC" "# --- SHI BEGIN ---" < "$SCRIPT_DIR/configs/bash/bashrc"
+fi
 log "Bash additions applied"
 
 # --- vim: additive config with markers ---
@@ -148,22 +185,24 @@ fi
 echo ""
 log "Install complete."
 echo ""
-echo "  i3 config:        ~/.config/i3/config"
+echo "  sway config:      ~/.config/sway/config"
 echo "  kitty config:     ~/.config/kitty/kitty.conf"
-echo "  picom config:     ~/.config/picom/picom.conf"
-echo "  i3status config:  ~/.config/i3status/config"
+echo "  waybar config:    ~/.config/waybar/config.jsonc"
+echo "  waybar style:     ~/.config/waybar/style.css"
+echo "  portal config:    ~/.config/xdg-desktop-portal/portals.conf"
 echo "  vim config:       ~/.vimrc"
 echo "  tmux config:      ~/.tmux.conf"
 echo "  wallpaper:        ~/wallpapers/vestige-dark.png"
 echo "  bash additions:   appended to ~/.bashrc"
-echo "  agent scripts:    ~/.config/i3/rofi-agent.sh, ~/.config/i3/shi-toggle.sh"
+echo "  agent scripts:    ~/.config/sway/shi-toggle.sh, sway-window-switcher.sh"
 echo ""
 echo "  Backups (only created when configs differ):"
 echo "    Standalone:  ~/.config/*/config.bak, ~/.config/kitty/kitty.conf.bak"
+echo "    Portal:      rm ~/.config/xdg-desktop-portal/portals.conf"
 echo "    Additive:    ~/.vimrc.bak, ~/.tmux.conf.bak"
 echo ""
 echo "  Next steps:"
-echo "    1. Start i3 (or log out and back in with i3 as your session)"
+echo "    1. Log out and start a Sway session (or run 'sway' from TTY)"
 echo "    2. Launch tmux and press Prefix + I to install plugins"
 echo "    3. Reload your shell: source ~/.bashrc"
 echo ""
@@ -172,6 +211,6 @@ echo "    Remove the SHI marker block in ~/.bashrc (markers: # --- SHI BEGIN/END
 echo "    Remove the SHI marker block in ~/.tmux.conf (markers: # --- SHI BEGIN/END ---)"
 echo "    Remove the SHI marker block in ~/.vimrc (markers: \" --- SHI BEGIN/END ---)"
 echo "    Restore backups: cp ~/.vimrc.bak ~/.vimrc && cp ~/.tmux.conf.bak ~/.tmux.conf"
-echo "    Standalone configs: cp ~/.config/i3/config.bak ~/.config/i3/config (etc.)"
+echo "    Standalone configs: cp ~/.config/sway/config.bak ~/.config/sway/config (etc.)"
 echo ""
 log "Done."

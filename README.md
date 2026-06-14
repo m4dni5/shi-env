@@ -8,9 +8,9 @@ A CLI-first, Vi-driven desktop environment for Debian, designed so both you and 
 
 ## What You Get
 
-- **i3** tiling window manager — Vi-style navigation, scriptable via `i3-msg`
+- **Sway** tiling compositor — i3-compatible config, Vi-style navigation, scriptable via `swaymsg`
 - **Kitty** terminal — GPU-accelerated with remote control (`kitten @` protocol)
-- **Picom** compositor — transparency, blur, shadows
+- **Waybar** status bar — CSS-themed, same data as i3status (disk, memory, CPU, load, time)
 - **Chromium** with CDP — browser automation from the command line
 - **Tmux** integration — terminal multiplexing with shared Vi keys
 - **Agent TUI** — Quake-style dropdown (`$mod+grave`), preloaded with skills, relaunches if killed
@@ -22,12 +22,12 @@ A CLI-first, Vi-driven desktop environment for Debian, designed so both you and 
 
 This isn't about making your desktop look pretty (though it does). It's about building a workspace where both you and an AI agent can operate — moving windows, launching programs, reading screens, taking screenshots — all through CLI tools.
 
-Every tool here has a command-line interface. Every keybinding follows Vi conventions. The agent talks to i3, kitty, and Chromium through their native IPC protocols.
+Every tool here has a command-line interface. Every keybinding follows Vi conventions. The agent talks to sway, kitty, and Chromium through their native IPC protocols.
 
 **Design principles:**
 
 1. **CLI-first** — if you can't control it from the terminal, it doesn't belong here
-2. **Vi keys everywhere** — `h/j/k/l` for navigation in i3, tmux, vim, resize mode
+2. **Vi keys everywhere** — `h/j/k/l` for navigation in sway, tmux, vim, resize mode
 3. **Agent-transparent** — the agent can see, control, and automate every layer
 4. **Minimal** — nothing heavy, nothing that needs a full desktop environment
 5. **Persistent** — everything auto-starts on login, survives reboots
@@ -38,16 +38,16 @@ Every tool here has a command-line interface. Every keybinding follows Vi conven
 
 ```
 ┌───────────────────────────────────────────────┐
-│                     i3                        │
+│                     Sway                      │
 │  ┌────────────┐ ┌────────────┐ ┌───────────┐  │
 │  │   kitty    │ │   kitty    │ │ chromium  │  │
 │  │  + tmux    │ │  + bash    │ │  (CDP)    │  │
 │  └────────────┘ └────────────┘ └───────────┘  │
 │  ┌─────────────────────────────────────────┐  │
-│  │            i3bar (top)                  │  │
+│  │           waybar (top)                  │  │
 │  └─────────────────────────────────────────┘  │
 ├───────────────────────────────────────────────┤
-│  Picom compositor  │  feh (wallpaper)         │
+│  Sway compositor (built-in) │ swaybg (wall)   │
 └───────────────────────────────────────────────┘
 ```
 
@@ -55,65 +55,69 @@ Every tool here has a command-line interface. Every keybinding follows Vi conven
 
 | Layer | CLI Tool | Agent Access |
 |-------|----------|--------------|
-| Window manager | `i3-msg` | `DISPLAY=:0 i3-msg` |
+| Compositor | `swaymsg` | `swaymsg` (no DISPLAY needed) |
 | Terminal | `kitten @` | Via Unix socket |
 | Agent TUI | `$mod+grave` | Quake dropdown, auto-relaunches |
 | Browser | CDP (port 9222) | `browser_*` tools |
-| Screenshots | `maim` | `DISPLAY=:0 maim` |
-| Keyboard/mouse | `xdotool` | `DISPLAY=:0 xdotool` |
+| Screenshots | `grim` + `slurp` | `grim`, `slurp` for selection |
+| Clipboard | `wl-copy` / `wl-paste` | `wl-copy`, `wl-paste` |
+| Keyboard/mouse | `ydotool` / `wtype` | `ydotool` (daemon) or `wtype` |
 
 ---
 
 ## Installation
 
-Debian 12+ (tested on Trixie/13). You need a connected display and sudo access.
+Debian 12+ / Parrot OS Security. You need a connected display and sudo access.
 
 ### Core Packages
 
 ```bash
 sudo apt-get install -y \
-  i3 i3status i3lock rofi \
+  sway swaybg \
+  waybar \
+  grim slurp \
+  wl-clipboard \
+  ydotool wtype \
+  rofi \
   kitty \
-  picom \
-  feh \
-  maim xdotool xsel \
   vim-gtk3 \
-  chromium lightdm
+  chromium \
+  jq \
+  xdg-desktop-portal-wlr
 ```
 
 **Why these:**
 
-- **i3** — tiling WM, scriptable via `i3-msg`, Vi-native navigation. Chosen over Sway (X11 ecosystem is more mature for agent tooling) and Awesome/Xmonad (simpler config, better CLI surface).
-- **kitty** — GPU-accelerated terminal with a remote control protocol. This is the killer feature — `kitten @` lets the agent send commands, read terminal contents, and manage windows without faking keystrokes. Alacritty and WezTerm don't have this.
-- **picom** — compositor for transparency, shadows, blur. The successor to Compton (dead) and xcompmgr (too minimal). Without picom, kitty's `background_opacity` is silently ignored.
-- **feh** — lightweight wallpaper setter. One command, no dependencies.
-- **maim** — modern screenshot tool. Replaces scrot (unmaintained) and ImageMagick's import (overkill).
-- **xdotool** — X11 automation for non-kitty apps. Send keystrokes, move windows, simulate input.
-- **xsel** — clipboard access from the terminal. Required by tmux-yank for system clipboard integration. Also gives the agent read/write access to the clipboard via `DISPLAY=:0 xsel`.
-- **vim-gtk3** — Vim with GTK3 GUI support, which enables `+clipboard`. This lets Vim share the system clipboard via `set clipboard=unnamedplus`. Plain `vim` on Debian doesn't have clipboard support compiled in.
-- **rofi** — application launcher and window switcher. Replaces dmenu with a full GUI: app launcher with icons (`$mod+d`), window switcher (`$mod+Tab`), and command runner (`$mod+Shift+d`). Fuzzy search, Vi navigation, fully themeable. This is the single biggest quality-of-life upgrade over dmenu.
-- **chromium** — browser with Chrome DevTools Protocol (CDP) for agent automation. The agent navigates, clicks, fills forms, and reads pages programmatically.
-- **lightdm** — display manager with autologin support.
+- **Sway** — i3-compatible Wayland compositor. Same config syntax as i3, native Wayland, built-in compositing (no picom needed), built-in gaps. The `swaymsg` IPC protocol is nearly identical to `i3-msg`.
+- **kitty** — GPU-accelerated terminal with a remote control protocol. `kitten @` lets the agent send commands, read terminal contents, and manage windows without faking keystrokes. Works natively on Wayland.
+- **waybar** — status bar for Wayland compositors. Replaces i3status with CSS theming, more modules, and native Wayland support. Config is `config.jsonc` (waybar 0.12.0+).
+- **grim** + **slurp** — screenshots on Wayland. `grim` captures the screen, `slurp` provides interactive region selection. Replaces `maim` (X11-only).
+- **wl-clipboard** — clipboard access on Wayland. `wl-copy` and `wl-paste` replace `xsel`/`xclip` with a cleaner API.
+- **ydotool** — input simulation on Wayland. Replaces `xdotool` (X11-only). Requires `ydotoold` daemon (started automatically by sway config).
+- **wtype** — lightweight keyboard injection on Wayland. Simpler than ydotool for keyboard-only tasks. No daemon needed.
+- **rofi** — application launcher. Works on Wayland (use `rofi-wayland` fork if available in your repos). Same config as the X11 version.
+- **chromium** — browser with CDP for agent automation. Runs identically on Wayland.
+- **jq** — JSON processor. Used by the Quake TUI toggle script and window switcher to parse sway's tree output.
+- **vim-gtk3** — Vim with clipboard support. Detects Wayland automatically via `wl-clipboard`.
+- **xdg-desktop-portal-wlr** — Wayland portal backend for Sway/wlroots. Provides screenshot and screencast portals. Without it, `xdg-desktop-portal` falls back to GTK/KDE backends (which timeout in pure Sway) and waybar crashes with a segfault on startup. The install script also creates `~/.config/xdg-desktop-portal/portals.conf` to set the correct backend priority.
 
-### Display Manager
+### Starting Sway
 
-Configure LightDM for autologin into i3:
+Sway starts from a TTY login. No display manager needed (though one works too):
 
 ```bash
-sudo groupadd -r autologin
-sudo gpasswd -a $USER autologin
+# Option 1: Manual start from TTY
+# Log in on a TTY, then:
+sway
 
-sudo tee -a /etc/lightdm/lightdm.conf << 'EOF'
+# Option 2: Auto-start on TTY login (add to ~/.bash_profile or ~/.zprofile)
+if [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+    exec sway
+fi
 
-[Seat:*]
-user-session=i3
-autologin-user=yourusername
-EOF
-
-sudo systemctl enable lightdm
+# Option 3: Display manager (greetd, SDDM, etc.)
+# Configure for sway session — see your DM's docs
 ```
-
-Replace `yourusername` with your actual username.
 
 ### Install the Configs
 
@@ -125,9 +129,9 @@ cd shi-env
 
 The install script handles everything:
 
-- **Standalone configs** (i3, kitty, picom, i3status) are copied to `~/.config/` — these are full configs that replace the defaults. Existing configs are backed up to `.bak` before overwriting.
+- **Standalone configs** (sway, kitty, waybar) are copied to `~/.config/` — these are full configs that replace the defaults. Existing configs are backed up to `.bak` before overwriting.
 - **Additive configs** (bash, vim, tmux) contain only the shi-specific additions, wrapped in marker comments.
-  - **Bash**: additions are appended to your existing `~/.bashrc` (idempotent — skips if already present).
+  - **Bash**: additions are appended to your existing `~/.bashrc` (idempotent — skips if already present). If upgrading from X11, the old `DISPLAY=:0` line is automatically removed.
   - **Vim**: uses `" --- SHI BEGIN ---` / `" --- SHI END ---` markers (`"` is Vim's comment character). Existing file is backed up to `.bak`.
   - **Tmux**: uses `# --- SHI BEGIN ---` / `# --- SHI END ---` markers. Existing file is backed up to `.bak`.
 
@@ -135,12 +139,11 @@ The install script handles everything:
 
 ### Agent Integration (Hermes)
 
-If you're running Hermes Agent, Shi gives you a Quake-style TUI dropdown (`$mod+grave`) — a floating kitty window running `hermes --tui -c -s i3-desktop,tmux` (class `shi-tui`). Starts on login, parked in the scratchpad. Press `$mod+grave` to summon, same key to dismiss. If the window was killed, the toggle script relaunches it automatically. The `-c` flag continues your last session, so the conversation persists. Skills `i3-desktop` and `tmux` are preloaded so the agent knows how to drive the desktop.
+If you're running Hermes Agent, Shi gives you a Quake-style TUI dropdown (`$mod+grave`) — a floating kitty window running `hermes --tui -c -s sway-desktop,tmux` (class `shi-tui`). Starts on login, parked in the scratchpad. Press `$mod+grave` to summon, same key to dismiss. If the window was killed, the toggle script relaunches it automatically. The `-c` flag continues your last session, so the conversation persists. Skills `sway-desktop` and `tmux` are preloaded so the agent knows how to drive the desktop.
 
-Wire up X11 access and browser control:
+Wire up browser control:
 
 ```bash
-xhost +local:
 hermes config set browser.cdp_url "http://localhost:9222"
 ```
 
@@ -148,11 +151,11 @@ hermes config set browser.cdp_url "http://localhost:9222"
 
 ## Config Walkthrough
 
-### i3 — Window Manager
+### Sway — Compositor/Window Manager
 
-**File:** `configs/i3/config`
+**File:** `configs/sway/config`
 
-The i3 config is the backbone. Every decision here serves the CLI-first principle.
+The sway config is the backbone. Sway is i3-compatible in config syntax — if you know i3, you know sway. Every decision here serves the CLI-first principle.
 
 **Why Super (Mod4) and not Alt:** Alt conflicts with terminal applications — tmux, vim, bash, and most CLI tools all use Alt for their own bindings. Super sits unused under the left thumb.
 
@@ -166,13 +169,17 @@ set $urgent   #c94427    # rust red
 set $dim      #4a4a5e    # grey
 ```
 
-Change these five values and the entire desktop rethemes — i3 bar, rofi, window decorations.
+Change these five values and the entire desktop rethemes — sway bar, rofi, waybar, window decorations.
 
 **Window decorations:** 2px pixel borders, no title bars. Minimal and clean.
 
-**Bar:** Top-positioned i3status with the theme colors. `i3status` feeds system metrics — disk, memory, CPU, load, time. Uses plain text labels instead of icon fonts for universal compatibility.
+**Gaps:** Built into sway (no i3-gaps package needed). 4px inner gaps, 0px outer.
 
-**Autostart:** Picom (compositor), feh (wallpaper), kitty (terminal), and Chromium (browser with CDP) all launch automatically on login.
+**Bar:** Top-positioned waybar with the theme colors. CSS-themed — edit `configs/waybar/style.css` to customize. Shows disk, memory, CPU, load, and time.
+
+**Transparency:** Sway handles compositing natively — no picom needed. Focused kitty at 90% opacity via `for_window` rule. Kitty's `background_opacity` works natively on Wayland.
+
+**Autostart:** swaybg (wallpaper), kitty (terminal), Chromium (browser with CDP), ydotoold (input daemon) all launch automatically on login.
 
 ### Kitty — Terminal
 
@@ -193,24 +200,19 @@ The socket gets a PID suffix at runtime (`/tmp/kitty-ipc-{PID}`). Discover it wi
 ls -t /tmp/kitty-ipc-* | head -1
 ```
 
-**Theme:** Mountain Twilight — deep navy backgrounds (`#1a1a2e`), muted silver text, amber gold accents. Kitty runs at full opacity; picom handles all transparency (focused at 90%, unfocused at 80%) with blur behind.
+**Theme:** Mountain Twilight — deep navy backgrounds (`#1a1a2e`), muted silver text, amber gold accents. Kitty runs at 90% opacity via sway's `for_window` rule.
 
 **Cursor note:** kitty 0.41.1 renamed `cursor_color` to `cursor`. If you're on an older version, use `cursor_color` instead.
 
-### Picom — Compositor
+### Waybar — Status Bar
 
-**File:** `configs/picom/picom.conf`
+**Files:** `configs/waybar/config.jsonc` + `configs/waybar/style.css`
 
-Picom adds the visual layer: transparency, blur, shadows, fading. Picom is the single source of truth for window opacity — kitty runs at `background_opacity 1.0` so the two layers don't compound.
+Waybar replaces i3status with a CSS-themed status bar. Same data sources — disk, memory, CPU, load, time — but with proper theming support.
 
-**Effects:**
+**Modules:** Workspaces (left), window title (center), system metrics + clock (right).
 
-- **Transparency:** Focused kitty at 90%, unfocused at 80%. Chromium stays at 100%.
-- **Blur:** `dual_kawase` at strength 3 — frosted glass behind transparent windows. Keeps text readable even with a busy wallpaper.
-- **Shadows:** 12px radius, 0.6 opacity — subtle depth without being distracting.
-- **Fading:** 0.03 step transitions — smooth but not slow.
-
-**Backend:** `glx` with vsync. If you get screen tearing, try switching to `xrender`.
+**Theme:** Mountain Twilight palette — matches sway and kitty. CSS in `style.css`, data in `config.json`. Edit either to customize.
 
 ### Rofi — Application Launcher
 
@@ -218,20 +220,20 @@ Picom adds the visual layer: transparency, blur, shadows, fading. Picom is the s
 
 Rofi replaces dmenu with a full GUI launcher: app launcher with icons, window switcher, and command runner. Fuzzy search, Vi navigation, fully themeable.
 
-**Theme:** Mountain Twilight palette — matches i3 and kitty. Amber gold selection highlight on deep navy background. 600px fixed width, 10 visible results, Papirus icon theme.
+**Theme:** Mountain Twilight palette — matches sway and kitty. Amber gold selection highlight on deep navy background. 600px fixed width, 10 visible results, Papirus icon theme.
 
 ### Tmux — Terminal Multiplexer
 
 **File:** `configs/tmux/tmux.conf`
 
-Tmux and i3 serve different purposes but use the same navigation keys — muscle memory transfers. i3 manages windows across the desktop; tmux manages terminal sessions within a single window.
+Tmux and sway serve different purposes but use the same navigation keys — muscle memory transfers. Sway manages windows across the desktop; tmux manages terminal sessions within a single window.
 
 **Vi mode** and **mouse** are enabled. The agent uses tmux's `send-keys` and `capture-pane` for programmatic access.
 
 **Plugins (via TPM):**
 - `tmux-yank` — sync clipboard with system
 - `tmux-logging` — log pane output to file
-- `tmux-tokyo-night` — night variant
+- `tmux-gruvbox` — dark variant
 
 ### Vim — Editor
 
@@ -249,7 +251,7 @@ set autoindent expandtab tabstop=4 shiftwidth=4
 set clipboard=unnamedplus
 ```
 
-This is a starting point. The important settings are `expandtab` (spaces, not tabs), `shiftwidth=4` (standard indent), and `clipboard=unnamedplus` (system clipboard integration — yank in vim, paste anywhere). Requires `vim-gtk3` — the plain `vim` package on Debian doesn't compile with clipboard support.
+This is a starting point. The important settings are `expandtab` (spaces, not tabs), `shiftwidth=4` (standard indent), and `clipboard=unnamedplus` (system clipboard integration — yank in vim, paste anywhere). Requires `vim-gtk3` — the plain `vim` package on Debian doesn't compile with clipboard support. On Wayland, vim-gtk3 auto-detects `wl-clipboard`.
 
 ### Bash — Shell
 
@@ -258,26 +260,25 @@ This is a starting point. The important settings are `expandtab` (spaces, not ta
 Shi additions appended to your existing `.bashrc`:
 
 ```bash
-export DISPLAY=:0
 export EDITOR=vim
 export VISUAL=$EDITOR
 set -o vi
 ```
 
-`DISPLAY=:0` lets any new terminal shell reach the X server. Without it, tools like `i3-msg`, `xdotool`, and `kitten @` can't find the display. `set -o vi` enables Vi-mode keybindings in bash.
+`set -o vi` enables Vi-mode keybindings in bash. No `DISPLAY` variable needed — sway sets `WAYLAND_DISPLAY` automatically for all session processes.
 
 ---
 
 ## Keyboard Reference Card
 
-### Global (i3)
+### Global (Sway)
 
 | Key | Action |
 |-----|--------|
 | `$mod+Return` | Open kitty |
 | `$mod+q` | Close window |
 | `$mod+d` | rofi app launcher |
-| `$mod+Tab` | rofi window switcher |
+| `$mod+Tab` | Sway window switcher (rofi dmenu) |
 | `$mod+Shift+d` | rofi command runner |
 | `$mod+grave` | Agent TUI toggle |
 | `$mod+h/j/k/l` | Focus left/down/up/right |
@@ -296,11 +297,11 @@ set -o vi
 | `$mod+right-drag` | Resize floating window |
 | `$mod+r` | Enter resize mode |
 | `$mod+Shift+r` | Reload config |
-| `$mod+Shift+e` | Exit i3 |
+| `$mod+Shift+e` | Exit sway |
 | `Print` | Screenshot |
 | `$mod+Print` | Screenshot selection |
 
-### Resize Mode (i3, `$mod+r` to enter)
+### Resize Mode (Sway, `$mod+r` to enter)
 
 | Key | Action |
 |-----|--------|
@@ -325,20 +326,12 @@ set -o vi
 
 ## Troubleshooting
 
-### i3: "Unable to find configuration file"
+### Sway: "Unable to find configuration file"
 
 No config file exists. Copy from this repo:
 
 ```bash
-cp configs/i3/config ~/.config/i3/config
-```
-
-### LightDM: Login loop
-
-`/var/run/utmpx` missing (common on minimal/container installs):
-
-```bash
-sudo touch /var/run/utmpx && sudo chmod 644 /var/run/utmpx
+cp configs/sway/config ~/.config/sway/config
 ```
 
 ### Kitty: Config not loading
@@ -347,11 +340,47 @@ sudo touch /var/run/utmpx && sudo chmod 644 /var/run/utmpx
 
 ### Kitty: Transparency not working
 
-No compositor running. Picom owns all window transparency — kitty's `background_opacity` is set to `1.0` (opaque) so the two layers don't compound. If you want to adjust transparency, edit picom's `opacity-rule` in `configs/picom/picom.conf`, not kitty.conf.
+On Wayland, kitty transparency works natively — no compositor needed. Set `background_opacity` in kitty.conf or use sway's `for_window` opacity rule.
 
-### i3status: Broken icons in bar
+### Waybar: Not appearing
 
-Nerd Font glyphs require a patched font. This config uses plain text labels instead. If you see boxes or question marks, switch to the plain labels in `configs/i3status/config`.
+Check that `swaybar_command waybar` is in the sway config's `bar {}` block, and that waybar is installed:
+
+```bash
+which waybar
+# If missing: sudo apt-get install waybar
+```
+
+### Waybar: Segfault on startup (Signal 11)
+
+Waybar crashes with SEGV in `libsigc++` during D-Bus proxy initialization. This happens when `xdg-desktop-portal-wlr` is not installed — the portal falls back to GTK/KDE backends (which timeout in pure Sway), and waybar crashes connecting to the broken portal.
+
+Fix:
+
+```bash
+# Install the missing portal backend
+sudo apt-get install -y xdg-desktop-portal-wlr
+
+# Create portal config (the install script does this automatically)
+mkdir -p ~/.config/xdg-desktop-portal
+cat > ~/.config/xdg-desktop-portal/portals.conf << 'EOF'
+[preferred]
+default=wlr;gtk
+org.freedesktop.impl.portal.FileChooser=gtk
+EOF
+```
+
+Then restart sway or reload the config.
+
+### ydotool: "Connection refused"
+
+The `ydotoold` daemon isn't running. Start it:
+
+```bash
+ydotoold &
+```
+
+The sway config starts it automatically. If it fails, check `journalctl --user -u ydotoold`.
 
 ### Browser tools: "Could not connect"
 
@@ -367,13 +396,12 @@ Then set in Hermes:
 hermes config set browser.cdp_url "http://localhost:9222"
 ```
 
-### Agent can't access X11
+### Screenshots: "grim: no output"
 
-The terminal session needs the `DISPLAY` variable:
+Grim needs a Wayland session. If running from SSH or a non-sway terminal, set:
 
 ```bash
-echo 'export DISPLAY=:0' >> ~/.bashrc
-xhost +local:
+export SWAYSOCK=/run/user/$(id -u)/sway-ipc.$(id -u).$(pgrep -x sway).sock
 ```
 
 ---
@@ -382,9 +410,9 @@ xhost +local:
 
 The `skills/` directory contains Hermes Agent skills — procedural knowledge for desktop automation. These are loaded on demand, not all at once.
 
-### i3 Desktop (`skills/i3-desktop/`)
+### Sway Desktop (`skills/sway-desktop/`)
 
-Everything between the agent and the desktop: i3-msg window management, kitty remote control (`kitten @`), maim screenshots, xsel clipboard, feh wallpaper, and xdotool input simulation.
+Everything between the agent and the desktop: swaymsg window management, kitty remote control (`kitten @`), grim screenshots, wl-clipboard, swaybg wallpaper, and ydotool/wtype input simulation.
 
 Load when: moving windows, launching apps, capturing the screen, reading the clipboard, or controlling kitty programmatically.
 
@@ -398,7 +426,7 @@ Load when: working inside terminal sessions, watching builds, extracting text fr
 
 ```bash
 # Copy to Hermes
-cp -r skills/i3-desktop ~/.hermes/skills/
+cp -r skills/sway-desktop ~/.hermes/skills/
 cp -r skills/tmux ~/.hermes/skills/
 
 # Or use the install script (does this automatically)
@@ -420,16 +448,26 @@ sudo apt-get install -y fzf ripgrep fd-find dunst ranger htop
 | **fzf** | Fuzzy finder for files, commands, history | The single biggest CLI productivity multiplier. `Ctrl+r` for history, `Ctrl+t` for files. Agent can use it for interactive discovery. |
 | **ripgrep** (`rg`) | Fast grep replacement | 10-100x faster than grep on large codebases. Agent's `search_files` tool uses it internally. |
 | **fd** | Fast `find` replacement | Cleaner syntax than `find`, respects `.gitignore`. Agent's file discovery benefits from it. |
-| **dunst** | Notification daemon | i3 doesn't have one. Without it, system notifications, cron alerts, and battery warnings are silently dropped. Lightweight, CLI-configurable via `dunstctl`. |
+| **dunst** | Notification daemon | Sway has `mako` as a native alternative, but dunst works too. Without a notification daemon, system alerts are silently dropped. CLI-configurable via `dunstctl`. |
 | **ranger** | Terminal file manager with Vi keys | Better than `ls`/`cd`/`cat` for browsing the filesystem. Image previews with kitty's icat protocol. |
 | **htop** | Process monitor | Interactive `top` replacement with Vi-style navigation and tree view. |
-| **betterlockscreen** | Lock screen with blurred wallpaper | Wraps i3lock with the wallpaper blurred. Requires `i3lock`. Install from GitHub — not in Debian repos. |
 
-### Notifications (dunst)
+### Notifications (mako or dunst)
 
-After installing dunst, add it to i3 autostart:
+Sway ships with `mako` as the recommended notification daemon. Install and add to sway config:
+
+```bash
+sudo apt-get install mako-notifier
+```
 
 ```
+exec --no-startup-id mako &
+```
+
+Or use dunst (works on Wayland too):
+
+```bash
+sudo apt-get install dunst
 exec --no-startup-id dunst &
 ```
 
@@ -439,34 +477,13 @@ Test with:
 notify-send "Shi" "Desktop notifications working"
 ```
 
-### Lock Screen (betterlockscreen)
-
-```bash
-# Install from GitHub (not in Debian repos)
-git clone https://github.com/betterlockscreen/betterlockscreen.git
-cd betterlockscreen
-sudo cp betterlockscreen /usr/local/bin/
-
-# Generate blurred wallpaper variants
-betterlockscreen -u ~/wallpapers/vestige-dark.png
-
-# Lock
-betterlockscreen -l
-```
-
-Add to i3 config:
-
-```
-bindsym $mod+x exec --no-startup-id betterlockscreen -l
-```
-
 ---
 
 ## Customization
 
 ### Theming
 
-All colors are defined as five variables at the top of the i3 config. Change these and everything follows:
+All colors are defined as five variables at the top of the sway config. Change these and everything follows:
 
 ```
 set $bg       #1a1a2e    # background
@@ -476,11 +493,11 @@ set $urgent   #c94427    # alerts
 set $dim      #4a4a5e    # inactive elements
 ```
 
-Match the kitty theme to the same palette in `kitty.conf`.
+Match the kitty and waybar themes to the same palette. Waybar uses CSS in `configs/waybar/style.css`.
 
 ### Gaps
 
-If you install `i3-gaps`, uncomment in the i3 config:
+Sway has gaps built in (no separate package). Edit in sway config:
 
 ```
 gaps inner 8
@@ -489,10 +506,10 @@ gaps outer 2
 
 ### Wallpaper
 
-Replace `~/wallpapers/vestige-dark.png` and update the feh command in i3 config:
+Replace `~/wallpapers/vestige-dark.png` and update the swaybg command in sway config:
 
 ```
-exec_always --no-startup-id feh --bg-fill ~/wallpapers/your-wallpaper.png
+exec --no-startup-id swaybg -i ~/wallpapers/your-wallpaper.png -m fill
 ```
 
 Generate wallpapers with AI:
