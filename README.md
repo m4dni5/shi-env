@@ -119,6 +119,25 @@ fi
 # Configure for sway session — see your DM's docs
 ```
 
+### Login Screen (greetd + tuigreet)
+
+Shi uses [greetd](https://git.sr.ht/~kennylevinsen/greetd) with [tuigreet](https://github.com/apognu/tuigreet) as the login manager. The theme matches the Mountain Twilight palette:
+
+```
+container=#1a1a2e  (deep navy background)
+border=#4a4a5e     (dim grey border)
+text=#c8c8d4       (muted silver text)
+title=#c9a227      (amber gold title)
+time=#c9a227       (amber gold clock)
+greet=#c9a227      (amber gold "Shi" greeting)
+prompt=#4a4a5e     (dim grey prompt labels)
+input=#c8c8d4      (silver user input)
+action=#c8c8d4     (silver status bar)
+button=#c9a227     (amber gold pill buttons — REVERSED)
+```
+
+The config lives at `/etc/greetd/config.toml`. A template is at `configs/greetd/config.toml` in this repo. The install script checks if the theme matches and warns if it doesn't.
+
 ### Install the Configs
 
 ```bash

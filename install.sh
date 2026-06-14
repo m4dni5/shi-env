@@ -89,6 +89,19 @@ if [ ${#MISSING[@]} -gt 0 ]; then
   echo ""
 fi
 
+# --- greetd: check tuigreet theme matches Mountain Twilight ---
+GREETD_CONF="/etc/greetd/config.toml"
+MT_THEME="container=#1a1a2e"
+if [ -f "$GREETD_CONF" ] && command -v tuigreet &>/dev/null; then
+  if ! grep -q "$MT_THEME" "$GREETD_CONF" 2>/dev/null; then
+    warn "greetd tuigreet theme does not match Mountain Twilight palette"
+    warn "Update with: sudo sed -i \"s|--theme '[^']*'|--theme 'container=#1a1a2e;border=#4a4a5e;text=#c8c8d4;title=#c9a227;time=#c9a227;greet=#c9a227;prompt=#4a4a5e;input=#c8c8d4;action=#c8c8d4;button=#c9a227'|\" $GREETD_CONF"
+    echo ""
+  else
+    log "greetd tuigreet theme matches Mountain Twilight"
+  fi
+fi
+
 # --- sway: standalone config ---
 mkdir -p "$HOME/.config/sway"
 install_if_changed "$SCRIPT_DIR/configs/sway/config" "$HOME/.config/sway/config"
@@ -190,6 +203,7 @@ echo "  kitty config:     ~/.config/kitty/kitty.conf"
 echo "  waybar config:    ~/.config/waybar/config.jsonc"
 echo "  waybar style:     ~/.config/waybar/style.css"
 echo "  portal config:    ~/.config/xdg-desktop-portal/portals.conf"
+echo "  greetd template:  configs/greetd/config.toml (install to /etc/greetd/config.toml)"
 echo "  vim config:       ~/.vimrc"
 echo "  tmux config:      ~/.tmux.conf"
 echo "  wallpaper:        ~/wallpapers/vestige-dark.png"
