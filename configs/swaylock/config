@@ -1,0 +1,36 @@
+# Swaylock — Mountain Twilight
+# Deep navy bg, amber gold ring, silver text, rust red error states
+
+# General
+show-failed-attempts
+
+# Colors — normal state
+color=1a1a2e
+inside-color=1a1a2e
+ring-color=c9a227
+line-color=4a4a5e
+separator-color=4a4a5e
+text-color=c8c8d4
+text-clear-color=c8c8d4
+text-ver-color=c8c8d4
+text-wrong-color=c8c8d4
+key-hl-color=c9a227
+bs-hl-color=c94427
+
+# Colors — verifying
+inside-ver-color=1a1a2e
+ring-ver-color=c9a227
+
+# Colors — wrong password
+inside-wrong-color=1a1a2e
+ring-wrong-color=c94427
+
+# Colors — clearing (after unlock)
+inside-clear-color=1a1a2e
+ring-clear-color=c9a227
+
+# Layout
+font=monospace
+font-size=14
+indicator-radius=60
+indicator-thickness=6

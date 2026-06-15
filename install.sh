@@ -76,7 +76,7 @@ declare -A PKG_BIN=(
   [vim-gtk3]=vim
   [xdg-desktop-portal-wlr]=/usr/libexec/xdg-desktop-portal-wlr
 )
-REQUIRED_PKGS=(sway swaybg waybar grim slurp wl-clipboard ydotool rofi kitty vim-gtk3 chromium jq xdg-desktop-portal-wlr)
+REQUIRED_PKGS=(sway swaybg waybar grim slurp wl-clipboard ydotool rofi kitty vim-gtk3 chromium jq xdg-desktop-portal-wlr swaylock swayidle)
 MISSING=()
 for pkg in "${REQUIRED_PKGS[@]}"; do
   bin="${PKG_BIN[$pkg]:-$pkg}"
@@ -120,6 +120,10 @@ install_if_changed "$SCRIPT_DIR/configs/kitty/kitty.conf" "$HOME/.config/kitty/k
 mkdir -p "$HOME/.config/waybar"
 install_if_changed "$SCRIPT_DIR/configs/waybar/config.jsonc" "$HOME/.config/waybar/config.jsonc"
 install_if_changed "$SCRIPT_DIR/configs/waybar/style.css" "$HOME/.config/waybar/style.css"
+
+# --- swaylock: standalone config ---
+mkdir -p "$HOME/.config/swaylock"
+install_if_changed "$SCRIPT_DIR/configs/swaylock/config" "$HOME/.config/swaylock/config"
 
 # --- xdg-desktop-portal config (prevents waybar SEGV with greetd) ---
 PORTALS_DIR="$HOME/.config/xdg-desktop-portal"
@@ -203,6 +207,7 @@ echo "  kitty config:     ~/.config/kitty/kitty.conf"
 echo "  waybar config:    ~/.config/waybar/config.jsonc"
 echo "  waybar style:     ~/.config/waybar/style.css"
 echo "  portal config:    ~/.config/xdg-desktop-portal/portals.conf"
+echo "  swaylock config:  ~/.config/swaylock/config"
 echo "  greetd template:  configs/greetd/config.toml (install to /etc/greetd/config.toml)"
 echo "  vim config:       ~/.vimrc"
 echo "  tmux config:      ~/.tmux.conf"

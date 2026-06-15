@@ -83,7 +83,9 @@ sudo apt-get install -y \
   vim-gtk3 \
   chromium \
   jq \
-  xdg-desktop-portal-wlr
+  xdg-desktop-portal-wlr \
+  swaylock \
+  swayidle
 ```
 
 **Why these:**
@@ -100,6 +102,8 @@ sudo apt-get install -y \
 - **jq** — JSON processor. Used by the Quake TUI toggle script and window switcher to parse sway's tree output.
 - **vim-gtk3** — Vim with clipboard support. Detects Wayland automatically via `wl-clipboard`.
 - **xdg-desktop-portal-wlr** — Wayland portal backend for Sway/wlroots. Provides screenshot and screencast portals. Without it, `xdg-desktop-portal` falls back to GTK/KDE backends (which timeout in pure Sway) and waybar crashes with a segfault on startup. The install script also creates `~/.config/xdg-desktop-portal/portals.conf` to set the correct backend priority.
+- **swaylock** — screen locker for Wayland. Mountain Twilight theme in `configs/swaylock/config`. `$mod+Escape` to lock immediately; auto-locks after 5 min idle with 10s grace period.
+- **swayidle** — idle daemon for Sway. Triggers auto-lock after 5 min and DPMS off after 10 min. Configured inline in sway config.
 
 ### Starting Sway
 
