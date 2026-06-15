@@ -121,6 +121,11 @@ title_align center
 gaps inner 4
 gaps outer 0
 
+# Import Wayland vars into systemd user environment (required for
+# xdg-desktop-portal, waybar, and other systemd-managed services when
+# sway is launched from greetd/tuigreet).
+exec_always --no-startup-id systemctl --user import-environment WAYLAND_DISPLAY SWAYSOCK DISPLAY XDG_CURRENT_DESKTOP
+
 # Bar — sway manages waybar lifecycle (restarts on crash)
 bar {
     swaybar_command waybar
