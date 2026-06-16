@@ -27,7 +27,8 @@ bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway?' -B 'Yes' 'swaymsg e
 bindsym $mod+Escape exec --no-startup-id swaylock -f
 
 # Idle — lock after 5 min (10s grace), DPMS off after 10 min
-exec swayidle -w \
+# exec_always restarts swayidle on config reload (kill old, start new)
+exec_always pkill swayidle 2>/dev/null; exec swayidle -w \
   timeout 300 'swaylock -f --grace 10' \
   timeout 600 'swaymsg "output * dpms off"' \
   resume 'swaymsg "output * dpms on"' \
